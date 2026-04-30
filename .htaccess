@@ -1,0 +1,27 @@
+
+# DO NOT REMOVE THIS LINE AND THE LINES BELLOW SSL_REDIRECT:
+RewriteEngine on
+
+# DO NOT REMOVE THIS LINE AND THE LINES BELLOW SSL_REDIRECT:
+
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^Product/([^/]+)/* product.php?id=$1 [L,QSA]
+
+RewriteRule ^Search-Category/([^/]+)/* shop.php?id=$1 [L,QSA]
+
+ 
+
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^([^\.]+)$ $1.php [NC,L]
+
+# DO NOT REMOVE THIS LINE AND THE LINES BELLOW UPGRADE_INSECURE_REQUESTS:
+Header always set Content-Security-Policy: upgrade-insecure-requests
+# DO NOT REMOVE THIS LINE AND THE LINES BELLOW UPGRADE_INSECURE_REQUESTS:
+
+#To stop directory listing from public
+<IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes 
+</IfModule>
