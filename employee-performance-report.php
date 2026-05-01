@@ -6,6 +6,44 @@ $from = $_GET['from'] ?? '';
 $to = $_GET['to'] ?? '';
 ?>
 
+<style>
+    .save-field {
+    border: none !important;
+    border-bottom: 1px solid #ccc !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    text-align: center;
+    padding: 4px 6px;
+    font-size: 13px;
+    box-shadow: none !important;
+}
+
+/* Focus effect */
+.save-field:focus {
+    border-bottom: 2px solid #28a745 !important;
+    outline: none;
+    background: #fff;
+}
+
+/* Remove red error border */
+.save-field:invalid {
+    border-bottom: 1px solid #ccc !important;
+    box-shadow: none;
+}
+
+/* Remove arrows - Chrome, Safari */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Remove arrows - Firefox */
+input[type=number] {
+    -moz-appearance: textfield;
+}
+    </style>
+
 <div class="content-body">
     <div class="container-fluid">
         <div class="row">
@@ -107,6 +145,7 @@ $to = $_GET['to'] ?? '';
                 </div>
             </div>
         </div>
+
         <div class="row">
             <div class="col-xl-6 col-lg-12">
                 <div class="card">
@@ -130,6 +169,7 @@ $to = $_GET['to'] ?? '';
                 </div>
             </div>
         </div>
+
         <div class="row">
             <div class="col-12">
                 <div class="card">
@@ -142,6 +182,7 @@ $to = $_GET['to'] ?? '';
                 </div>
             </div>
         </div>
+
         <div class="row">
             <div class="col-12">
                 <div class="card">
@@ -198,8 +239,25 @@ $to = $_GET['to'] ?? '';
                                         <th>Lost</th>
                                         <th>Conversion %</th>
                                         <th>Response Time(mins)</th>
+                                        <th>Last Update</th>
                                         <th>Joining Date</th>
                                         <th>Status</th>
+                                        <th>Total Leads</th>
+                                        <th>Add-on Sales ₹</th>
+                                        <th>Review Quality (1-5)</th>
+                                        <th>Task Accuracy %</th>
+                                        <th>Attendance Days Missed</th>
+                                        <th>Trainings Missed</th>
+                                        <th>Knowledge Applied (1-10)</th>
+                                        <th>Process Accuracy %</th>
+                                        <th>Collaboration (1-7)</th>
+                                        <th>Ownership (1-8)</th>
+                                        <th>Values (1-5)</th>
+                                        <th>Results Marks</th>
+                                        <th>Skills Marks</th>
+                                        <th>Attitude Marks</th>
+                                        <th>Final Score</th>
+                                        <th>Zone</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -211,6 +269,16 @@ $to = $_GET['to'] ?? '';
                                         u.role,
                                         u.status,
                                         u.joining_date,
+                                        u.add_on_sale,
+                                        u.review_quality,
+                                        u.task_accuracy,
+                                        u.attendance_days_missed,
+                                        u.trainings_missed,
+                                        u.knowledge_applied,
+                                        u.process_accuracy,
+                                        u.collaboration,
+                                        u.ownership,
+                                        u.values_data,
 
                                         COUNT(q.id) AS total_queries,
 
@@ -247,7 +315,17 @@ $to = $_GET['to'] ?? '';
                                         u.name,
                                         u.role,
                                         u.status,
-                                        u.joining_date
+                                        u.joining_date,
+                                         u.add_on_sale,
+                                        u.review_quality,
+                                        u.task_accuracy,
+                                        u.attendance_days_missed,
+                                        u.trainings_missed,
+                                        u.knowledge_applied,
+                                        u.process_accuracy,
+                                        u.collaboration,
+                                        u.ownership,
+                                        u.values_data
 
                                     ORDER BY 
                                         conversion_percentage DESC,
@@ -283,7 +361,9 @@ $to = $_GET['to'] ?? '';
                                             : 'No Update';
 
                                         echo '
-                                        <tr>
+
+    
+                                        <tr data-user-id="' . $row['id'] . '">
                                             <td>' . $sno++ . '</td>
                                             <td><strong>' . htmlspecialchars($row['name']) . '</strong></td>
                                             <td>' . htmlspecialchars($row['role']) . '</td>
@@ -298,12 +378,25 @@ $to = $_GET['to'] ?? '';
                                             <td><span class="badge ' . $conversionClass . '">' . $row['conversion_percentage'] . '%</span></td>
 
                                             <td>' . $avg_time . '</td>
-
                                             <td>' . $last_update . '</td>
-
                                             <td>' . $joining_date . '</td>
                                             <td>' . $status_badge . '</td>
+
+                                            <td>  </td>
+
+                                            <td><input type="number" class="form-control save-field" name="add_on_sale" value="'.$row['add_on_sale'].'"></td>
+                                            <td><input type="number" class="form-control save-field" name="review_quality" value="'.$row['review_quality'].'"></td>
+                                            <td><input type="number" class="form-control save-field" name="task_accuracy" value="'.$row['task_accuracy'].'"></td>
+                                            <td><input type="number" class="form-control save-field" name="attendance_days_missed" value="'.$row['attendance_days_missed'].'"></td>
+                                            <td><input type="number" class="form-control save-field" name="trainings_missed" value="'.$row['trainings_missed'].'"></td>
+                                            <td><input type="number" class="form-control save-field" name="knowledge_applied" value="'.$row['knowledge_applied'].'"></td>
+                                            <td><input type="number" class="form-control save-field" name="process_accuracy" value="'.$row['process_accuracy'].'"></td>
+                                            <td><input type="number" class="form-control save-field" name="collaboration" value="'.$row['collaboration'].'"></td>
+                                            <td><input type="number" class="form-control save-field" name="ownership" value="'.$row['ownership'].'"></td>
+                                            <td><input type="number" class="form-control save-field" name="values_data" value="'.$row['values_data'].'"></td>
+
                                         </tr>';
+
                                     }
                                     ?>
                                 </tbody>
@@ -313,6 +406,7 @@ $to = $_GET['to'] ?? '';
                 </div>
             </div>
         </div>
+
     </div>
 </div>
 
@@ -583,5 +677,36 @@ $to = $_GET['to'] ?? '';
                 }
             }
         });
+    });
+</script>
+
+<script>
+   $(document).on("blur", ".save-field", function () {
+
+    let row = $(this).closest("tr");
+    let user_id = row.data("user-id");
+
+    let data = {
+        user_id: user_id,
+        add_on_sale: row.find('[name="add_on_sale"]').val(),
+        review_quality: row.find('[name="review_quality"]').val(),
+        task_accuracy: row.find('[name="task_accuracy"]').val(),
+        attendance_days_missed: row.find('[name="attendance_days_missed"]').val(),
+        trainings_missed: row.find('[name="trainings_missed"]').val(),
+        knowledge_applied: row.find('[name="knowledge_applied"]').val(),
+        process_accuracy: row.find('[name="process_accuracy"]').val(),
+        collaboration: row.find('[name="collaboration"]').val(),
+        ownership: row.find('[name="ownership"]').val(),
+        values: row.find('[name="values_data"]').val()
+    };
+
+    $.ajax({
+        url: "ajax/save_employee_report.php",
+        method: "POST",
+        data: data,
+        success: function (res) {
+            console.log("Saved:", res);
+        }
+    });
     });
 </script>
