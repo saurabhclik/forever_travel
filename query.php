@@ -1766,12 +1766,13 @@
                                 <th scope="col">Action</th>
                             </tr>
                         </thead>
-                        <tbody id="saleTableBody">
-
+                        <tbody id="paymentTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center">No Data</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
-
             </div>
 
             <div class="modal-footer">
@@ -1780,9 +1781,7 @@
                 </button>
 
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-
             </div>
-
         </div>
     </div>
 </div>
@@ -1886,7 +1885,7 @@
 <script>
     $(document).on("click", ".addSaleAmount", function () {
         
-        let saleAmount = $(this).data("sale_amount"); // get value
+        let saleAmount = $(this).data("sale_amount"); 
         let id = $(this).data("id");
         $("#saleAmountView").val(saleAmount);
 
@@ -1894,7 +1893,6 @@
 
     });
 </script>
-
 
 <script>
     document.getElementById("btnSaveStatus").addEventListener("click", function(e){
@@ -2333,9 +2331,9 @@
         $("#hidden_update_id").val($(this).data('id'));
     })
 
-    $(document).on("click", "#payment_button", function() {
-        $("#hidden_query_id").val($(this).data('id'));
-    })
+    // $(document).on("click", "#payment_button", function() {
+    //     $("#hidden_query_id").val($(this).data('id'));
+    // })
 
     $(document).on("click", "#addSaleAmount", function() {
         $("#saleAmountView").val($(this).data('sale_amount'));
@@ -2550,4 +2548,34 @@
     //     updateSelectedCount();
     // });
 
+</script>
+
+<!-- fetch sales payent detials -->
+<script>
+$(document).on("click", ".payment_button", function () {
+
+    let queryId = $(this).data("id");
+
+    console.log("Clicked ID:", queryId);
+
+    $("#hidden_query_id").val(queryId);
+
+    loadPayments(queryId);
+});
+
+function loadPayments(query_id) {
+    $.ajax({
+        url: "ajax/get_payment.php",
+        type: "POST",
+        data: { query_id: query_id },
+        success: function (response) {
+            console.log("AJAX Response:", response); // debug
+            $("#paymentTableBody").html(response);
+        },
+        error: function (xhr) {
+            console.log(xhr.responseText);
+            alert("Error loading data");
+        }
+    });
+}
 </script>

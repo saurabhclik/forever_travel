@@ -1,0 +1,5 @@
+ALTER TABLE `users` ADD `add_on_sale` DECIMAL(10,2) NOT NULL DEFAULT '0' AFTER `status`, ADD `task_accuracy` DECIMAL(10,2) NULL DEFAULT '0' AFTER `add_on_sale`, ADD `attendance_days_missed` DECIMAL(10,2) NULL DEFAULT '0' AFTER `task_accuracy`, ADD `review_quality` DECIMAL(10,2) NOT NULL DEFAULT '0' AFTER `attendance_days_missed`, ADD `trainings_missed` DECIMAL(10,2) NOT NULL DEFAULT '0' AFTER `review_quality`, ADD `knowledge_applied` DECIMAL(10,2) NOT NULL DEFAULT '0' AFTER `trainings_missed`, ADD `process_accuracy` DECIMAL(10,2) NOT NULL DEFAULT '0' AFTER `knowledge_applied`, ADD `collaboration` DECIMAL(10,2) NOT NULL DEFAULT '0' AFTER `process_accuracy`, ADD `ownership` DECIMAL(10,2) NOT NULL DEFAULT '0' AFTER `collaboration`, ADD `values_data` DECIMAL(10,2) NOT NULL DEFAULT '0' AFTER `ownership`;
+
+create table employe_report like users;
+
+ALTER TABLE `employe_report` ADD `user_id` INT(11) NOT NULL AFTER `id`;
