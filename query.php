@@ -52,24 +52,72 @@
         }
     }
 
+    // if(isset($_POST['btnSaveStatus']))
+    // {
+    //     // echo '<pre>'; print_r($_POST); exit;
+    //     $stmt = $mysqli->prepare("UPDATE `query_mst` SET `status` = ?, `call_time` = ?, `call_date` = ?, `sale_amount` = ?, `remarks` = ? WHERE `id` = ?");
+    //     $stmt->bind_param("sssssi", $_POST['status'], $_POST['call_time'], $_POST['call_date'], $_POST['sale_amount'], $_POST['remarks'], $_POST['id']);
+    //     $stmt->execute();
+    //     $stmt->close();
+
+    //     $stmt = $mysqli->prepare("INSERT into `query_det` (`mst_id`,`remarks`,`call_time`,`call_date`,`user_id`,`status`)values (?,?,?,?,?,?)");
+    //     $stmt->bind_param("isssis",   $_POST['id'], $_POST['remarks'], $_POST['call_time'], $_POST['call_date'], $user['id'], $_POST['status']);
+    //     $stmt->execute();
+
+    //     $_SESSION['alert'] = [
+    //         'title' => 'Lead Updated Successfully',
+    //         'text' => 'The lead details were Updated successfully.',
+    //         'icon' => 'success'
+    //     ];
+    //     redirect("?status=" . $_GET['status'] . "");
+    // }
+
     if(isset($_POST['btnSaveStatus']))
     {
-        // echo '<pre>'; print_r($_POST); exit;
-        $stmt = $mysqli->prepare("UPDATE `query_mst` SET `status` = ?, `call_time` = ?, `call_date` = ?, `sale_amount` = ?, `remarks` = ? WHERE `id` = ?");
-        $stmt->bind_param("sssssi", $_POST['status'], $_POST['call_time'], $_POST['call_date'], $_POST['sale_amount'], $_POST['remarks'], $_POST['id']);
-        $stmt->execute();
-        $stmt->close();
+    $status = $_POST['status'];
+    $call_time = $_POST['call_time'];
+    $call_date = $_POST['call_date'];
+    $sale_amount = $_POST['sale_amount'];
+    $remarks = $_POST['remarks'];
 
-        $stmt = $mysqli->prepare("INSERT into `query_det` (`mst_id`,`remarks`,`call_time`,`call_date`,`user_id`,`status`)values (?,?,?,?,?,?)");
-        $stmt->bind_param("isssis",   $_POST['id'], $_POST['remarks'], $_POST['call_time'], $_POST['call_date'], $user['id'], $_POST['status']);
-        $stmt->execute();
+    // COMMON VALIDATION
+    if(empty($remarks)) {
+        alert("Remarks is required", "warning", "warning");
+        exit;
+    }
 
-        $_SESSION['alert'] = [
-            'title' => 'Lead Updated Successfully',
-            'text' => 'The lead details were Updated successfully.',
-            'icon' => 'success'
-        ];
-        redirect("?status=" . $_GET['status'] . "");
+    // FOLLOW UP VALIDATION
+    if($status == "Follow Up") {
+        if(empty($call_time) || empty($call_date)) {
+            alert("Please enter call date and call time", "warning", "warning");
+            exit;
+        }
+    }
+
+    // CONVERTED VALIDATION
+    if($status == "Converted") {
+        if(empty($sale_amount) || $sale_amount <= 0) {
+            alert("Please enter valid sale amount", "warning", "warning");
+            exit;
+        }
+    }
+
+    $stmt = $mysqli->prepare("UPDATE `query_mst` SET `status`=?, `call_time`=?, `call_date`=?, `sale_amount`=?, `remarks`=? WHERE id=?");
+    $stmt->bind_param("sssssi", $status, $call_time, $call_date, $sale_amount, $remarks, $_POST['id']);
+    $stmt->execute();
+    $stmt->close();
+
+    $stmt = $mysqli->prepare("INSERT into `query_det` (`mst_id`,`remarks`,`call_time`,`call_date`,`user_id`,`status`) values (?,?,?,?,?,?)");
+    $stmt->bind_param("isssis", $_POST['id'], $remarks, $call_time, $call_date, $user['id'], $status);
+    $stmt->execute();
+
+    $_SESSION['alert'] = [
+        'title' => 'Success',
+        'text' => 'Status updated successfully',
+        'icon' => 'success'
+    ];
+
+    redirect("?status=" . ($_GET['status'] ?? 'All'));
     }
 
     if (isset($_POST['btnSavePayment'])) 
@@ -150,10 +198,10 @@
                 'text' => 'The payment has been recorded.',
                 'icon' => 'success'
             ];
-            redirect("?status=" . $_GET['status']);
+           redirect("?status=" . ($_GET['status'] ?? 'All'));
         } else {
             alert("Query ID missing.", "error", "error");
-            redirect("?status=" . $_GET['status']);
+            redirect("?status=" . ($_GET['status'] ?? 'All'));
         }
     }
 
@@ -334,6 +382,7 @@
         ];
         redirect("?status=" . $_GET['status']);
     }
+
 ?>
 
 <style>
@@ -467,19 +516,28 @@
                     <div class="query-button m-4 flex-wrap">
                         <a href="?status=All<?= ($userFilter ? '&user_filter=' . $userFilter : '') ?>"
                             class="btn mt-md-0 mt-2 <?php if ($currentStatus == 'All') echo 'btn-success'; else echo 'btn-primary'; ?>">All</a>
-                        <?php 
-                            $stmt = $mysqli->prepare('SELECT * FROM status');
-                            $stmt->execute();
-                            $res = $stmt->get_result();
-                            while ($row = $res->fetch_assoc()) 
-                            { 
+                       <?php 
+                        $stmt = $mysqli->prepare("SELECT * FROM status WHERE name != 'All' AND name != 'Pending'");
+                        $stmt->execute();
+                        $res = $stmt->get_result();
+
+                        while ($row = $res->fetch_assoc()) 
+                        { 
+                            $statusName = trim($row['name']); // IMPORTANT
                         ?>
-                            <a href="?status=<?php echo $row['name'] . ($userFilter ? '&user_filter=' . $userFilter : '') ?>"
-                                class="btn mt-md-0 mt-2 <?php if ($currentStatus == $row['name']) echo 'btn-success'; else echo 'btn-primary'; ?>"><?= $row['name'] ?>
+                            <a href="?status=<?= $statusName . ($userFilter ? '&user_filter=' . $userFilter : '') ?>"
+                                class="btn mt-md-0 mt-2 <?= ($currentStatus == $statusName) ? 'btn-success' : 'btn-primary'; ?>">
+                                <?= htmlspecialchars($statusName) ?>
                             </a>
                         <?php 
-                            }  
+                        }  
                         ?>
+
+                         <a href="?status=Booked<?= ($userFilter ? '&user_filter=' . $userFilter : '') ?>"
+                            class="btn mt-md-0 mt-2 <?php if ($currentStatus == 'Booked') echo 'btn-success'; else echo 'btn-primary'; ?>">Booked</a>
+
+                            <a href="?status=Missed<?= ($userFilter ? '&user_filter=' . $userFilter : '') ?>"
+                            class="btn mt-md-0 mt-2 <?php if ($currentStatus == 'Missed') echo 'btn-success'; else echo 'btn-primary'; ?>">Missed</a>
                     </div>
                     
                     <div class="card-body">
@@ -516,11 +574,13 @@
                                             <span class="selected-count-badge">leads selected</span>
                                         </div>
                                     </div>
+
                                     <div class="col-md-3">
                                         <button type="submit" name="leadAllocate" class="btn btn-success btn-block" id="transferLeadsBtn" disabled>
                                             <i class="fa fa-share"></i> Transfer Leads
                                         </button>
                                     </div>
+
                                     <div class="col-md-2">
                                         <button type="button" class="btn btn-secondary btn-block" id="clearSelectionBtn">
                                             <i class="fa fa-times"></i> Clear All
@@ -541,13 +601,15 @@
                                                 <label for="checkAll" class="ms-1 small">All</label>
                                                 <?php endif; ?>
                                             </th>
-                                            <th>User</th>
+                                            <th>Lead ID</th>
+                                            <th>User</th>                                        
                                             <th>Customer Info</th>
                                             <th>Destination</th>
                                             <th>Travel Dates</th>
                                             <th>Persons</th>
                                             <th>Service</th>
                                             <th>Follow Up</th>
+                                            <th>Status</th>
                                             <th>Remarks</th>
                                             <th>Created</th>
                                         </tr>
@@ -580,6 +642,37 @@
                                                     $stmt->bind_param($types, ...$params);
                                                 }
                                             } 
+                                                 else if ($currentStatus == "Missed")
+                                                {
+                                                    $current_date = date("Y-m-d");
+                                                    $current_time = date("H:i:s");
+
+                                                    $query = "SELECT a.*, b.name as customer, b.number as mobile, b.email, c.name as user, d.name as destination_name
+                                                        FROM query_mst a
+                                                        LEFT JOIN customers b ON a.customer_id = b.id
+                                                        LEFT JOIN destinations d ON a.destination = d.id
+                                                        LEFT JOIN users c ON a.user_id = c.id
+                                                        WHERE a.status = 'Follow Up'
+                                                        AND (
+                                                            a.call_date < ?
+                                                            OR (a.call_date = ? AND a.call_time < ?)
+                                                        )";
+
+                                                    $params = [$current_date, $current_date, $current_time];
+                                                    $types = "sss";
+
+                                                    if (!empty($userFilter)) {
+                                                        $query .= " AND FIND_IN_SET(?, a.user_id)";
+                                                        $params[] = $userFilter;
+                                                        $types .= "i";
+                                                    }
+
+                                                    $query .= " ORDER BY a.pinned DESC, a.id DESC";
+
+                                                    $stmt = $mysqli->prepare($query);
+                                                    $stmt->bind_param($types, ...$params);
+                                                }
+
                                             else 
                                             {
                                                 $query = "SELECT a.*, b.name as customer, b.number as mobile, b.email, c.name as user, d.name as destination_name
@@ -717,6 +810,9 @@
                                                 <span class="pin-query text-warning" style="cursor:pointer;" data-id="<?= $row['id'] ?>" data-value="0">📌</span>
                                                 <?php endif; ?>
                                              </div>
+                                            
+                                             <td><?= $row['id']; ?></div>
+
                                             <td>
                                                 <div class="d-flex align-items-center justify-content-between">
                                                     <span><?= htmlspecialchars($row['user'] ?? 'N/A'); ?></span>
@@ -751,8 +847,13 @@
                                                             </li>
                                                             <?php if($row['status'] == "Converted"): ?>
                                                             <li><hr class="dropdown-divider"></li>
-                                                            <li>
-                                                                <button type="button" class="dropdown-item addSaleAmount" data-sale_amount="<?= $row['sale_amount']; ?>" data-id="<?= $row['id']; ?>" data-bs-toggle="modal" data-bs-target="#AddSale">💰 Sale Amount</button>
+                                                            <li>                               
+                                                                <button type="button" class="dropdown-item addSaleAmount"
+                                                                    data-sale_amount="<?= $row['sale_amount']; ?>"
+                                                                    data-id="<?= $row['id']; ?>"
+                                                                    data-bs-toggle="modal"
+                                                                    data-bs-target="#AddSale">💰 Sale Amount
+                                                                </button>
                                                             </li>
                                                             <li>
                                                                 <button type="button" class="dropdown-item add_expenses" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#AddPayment" data-customer_id="<?= $row['customer_id'] ?>">📊 Expenses</button>
@@ -771,11 +872,14 @@
                                                     </div>
                                                 </div>
                                              </div>
+                                             
+
                                             <td>
                                                 <strong>Name:</strong> <?= htmlspecialchars($row['customer'] ?? 'N/A'); ?><br>
                                                 <strong>Mobile:</strong> <?= htmlspecialchars($row['mobile'] ?? 'N/A'); ?><br>
                                                 <strong>Email:</strong> <?= htmlspecialchars($row['email'] ?? 'N/A'); ?>
                                              </div>
+                                            
                                             <td><?= htmlspecialchars($row['destination_name'] ?? 'N/A'); ?> </div>
                                             <td>
                                                 <?= htmlspecialchars($row['travel_month'] ?? 'N/A'); ?><br>
@@ -796,6 +900,13 @@
                                                 <strong>Date:</strong> <?= $row['call_date']; ?>
                                                 <?php endif; ?>
                                              </div>
+                                            
+                                            <td>
+                                                <span class="badge bg-info">
+                                                <?= htmlspecialchars($row['status'] ?? 'N/A'); ?>
+                                                </span>
+                                            </td>
+
                                             <td>
                                                 <?php 
                                                     $remarks = isset($row['remarks']) && !empty($row['remarks']) ? $row['remarks'] : '----------'; 
@@ -831,7 +942,6 @@
         </div>
     </div>
 </div>
-
 
 <div class="modal fade bd-example-modal-lg" id="queryModal" tabindex="-1" aria-labelledby="exampleModalLabel"
     aria-hidden="true">
@@ -993,7 +1103,6 @@
     </form>
 </div>
 
-
 <div class="modal fade status_change" id="status_change" tabindex="-1" aria-labelledby="exampleModalLabel"
     aria-hidden="true">
     <form class="needs-validation" novalidate method="POST">
@@ -1004,6 +1113,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal">
                     </button>
                 </div>
+
                 <div class="modal-body">
                     <div class="row">
                         <input id="hidden_update_id" name="id" type="hidden">
@@ -1021,22 +1131,23 @@
                         </div>
                         <div class="col-md-6 follow_up">
                             <label for="">Call Time</label>
-                            <input type="time" name="call_time" id="call_time" class="form-control">
+                            <input type="time" name="call_time" id="call_time" class="form-control" >
                         </div>
                         <div class="col-md-6 follow_up">
                             <label for="">Call Date</label>
-                            <input type="date" name="call_date" id="call_date" class="form-control">
+                            <input type="date" name="call_date" id="call_date" class="form-control" >
                         </div>
                         <div class="col-md-6 sale_amount">
                             <label for="">Sale Amount</label>
-                            <input type="number" name="sale_amount" id="sale_amount" class="form-control">
+                            <input type="number" name="sale_amount" id="sale_amount" class="form-control" >
                         </div>
                         <div class="col-md-12">
                             <label for="name" class="form-label">Remarks</label>
-                            <textarea class="form-control" id="remarks" name="remarks" value="" required></textarea>
+                            <textarea class="form-control" id="remarks" name="remarks" value=""require></textarea>
                         </div>
                     </div>
                 </div>
+
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">Close</button>
                     <button type="submit" name="btnSaveStatus" id="btnSaveStatus" class="btn btn-primary btnname">Save
@@ -1046,7 +1157,6 @@
         </div>
     </form>
 </div>
-
 
 <div class="modal fade payment_collect" id="payment_collect" tabindex="-1" aria-labelledby="exampleModalLabel"
     aria-hidden="true">
@@ -1093,7 +1203,7 @@
                 <div class="modal-footer">
                     <input type="hidden" name="query_id" id="hidden_query_id">
                     <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" name="btnSavePayment" id="btnSaveStatus" class="btn btn-primary btnname">Save
+                    <button type="submit" name="btnSavePayment" id="btnSavePayment" class="btn btn-primary btnname">Save
                         changes</button>
                 </div>
             </div>
@@ -1211,6 +1321,7 @@
 
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <form action="" method="post" class="needs-validation" id="customerForm">
     <div class="modal fade" id="exampleModalToggle" aria-hidden="true" aria-labelledby="exampleModalToggleLabel"
@@ -1485,7 +1596,6 @@
     </div>
 </form>
 
-
 <div class="modal fade bd-example-modal-lg-expense" id="expense_add" tabindex="-1" role="dialog" aria-hidden="true">
     <form class="needs-validation" novalidate method="post" enctype="multipart/form-data">
         <div class="modal-dialog modal-lg" role="document">
@@ -1625,8 +1735,6 @@
     </form>
 </div>
 
-
-
 <!-- add payment modal  -->
 <div class="modal fade" id="AddSale" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -1678,7 +1786,6 @@
         </div>
     </div>
 </div>
-
 
 <!-- Expense Details Modal -->
 <div class="modal fade" id="AddPayment" tabindex="-1" aria-labelledby="expenseModalLabel" aria-hidden="true">
@@ -1732,7 +1839,6 @@
     </div>
 </div>
 
-
 <!-- Modal for share lead -->
 <div class="modal fade" id="shareLead" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -1777,356 +1883,174 @@
     </div>
 </div>
 
+<script>
+    $(document).on("click", ".addSaleAmount", function () {
+        
+        let saleAmount = $(this).data("sale_amount"); // get value
+        let id = $(this).data("id");
+        $("#saleAmountView").val(saleAmount);
+
+        $("#hidden_query_id").val(id);
+
+    });
+</script>
 
 
 <script>
-$(document).ready(function() {
-    $('#add-query').on('click', function() {
-        Swal.fire({
-            title: 'Choose an Option',
-            text: 'Is this for an Existing Customer or a New Customer?',
-            icon: 'question',
-            showCancelButton: true,
-            showDenyButton: true,
-            confirmButtonText: 'Existing Customer',
-            denyButtonText: 'New Customer',
-            cancelButtonText: 'Cancel',
-            allowOutsideClick: false
-        }).then((result) => {
-            if (result.isConfirmed) {
+    document.getElementById("btnSaveStatus").addEventListener("click", function(e){
+
+        let status = document.getElementById("status").value;
+        let callTime = document.getElementById("call_time").value;
+        let callDate = document.getElementById("call_date").value;
+        let saleAmount = document.getElementById("sale_amount").value;
+        let remarks = document.getElementById("remarks").value;
+
+        if (!status) {
+            e.preventDefault();
+            Swal.fire("Warning", "Please select status", "warning");
+            return;
+        }
+
+        if (!remarks) {
+            e.preventDefault();
+            Swal.fire("Warning", "Remarks is required", "warning");
+            return;
+        }
+
+        if (status === "Follow Up") {
+            if (!callTime || !callDate) {
+                e.preventDefault();
+                Swal.fire("Warning", "Please enter call date and call time", "warning");
+                return;
+            }
+        }
+
+        if (status === "Converted") {
+            if (!saleAmount || saleAmount <= 0) {
+                e.preventDefault();
+                Swal.fire("Warning", "Please enter valid sale amount", "warning");
+                return;
+            }
+        }
+
+    });
+</script>
+
+<script>
+
+    $(document).ready(function() {
+        $('#add-query').on('click', function() {
+            Swal.fire({
+                title: 'Choose an Option',
+                text: 'Is this for an Existing Customer or a New Customer?',
+                icon: 'question',
+                showCancelButton: true,
+                showDenyButton: true,
+                confirmButtonText: 'Existing Customer',
+                denyButtonText: 'New Customer',
+                cancelButtonText: 'Cancel',
+                allowOutsideClick: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#queryModal').modal('show');
+                    $('.new-customer-div').addClass('d-none');
+                    $('.existing-customer-div').removeClass('d-none');
+                } else if (result.isDenied) {
+                    $('.new-customer-div').removeClass('d-none');
+                    $('.existing-customer-div').addClass('d-none');
+                    $('#exampleModalToggle').modal('show');
+                }
+            }).catch((dismiss) => {
+                if (dismiss === Swal.DismissReason.cancel) {
+                    // Do nothing on cancel
+                }
+            });
+        });
+    });
+
+    $(document).on("click", ".edit", function() {
+        $("#id").val($(this).data("id"))
+        $(".btnname").html("Update Query");
+        $.ajax({
+            method: "POST",
+            url: "ajax/get-query-details.php",
+            data: {
+                id: $(this).data("id")
+            },
+            success: function(data) {
+                console.log(data);
+                data = JSON.parse(data);
+                $.each(data, function(i, o) {
+                    $('input[name=' + i + ']').val(o);
+                    $('select[name=' + i + ']').val(o);
+                    $('textarea[name=' + i + ']').val(o);
+                    if (o == "Follow Up") {
+                        $(".follow_up").show(500)
+                    }
+                    if (o == "Completed") {
+                        $(".status").hide()
+                    }
+                })
+                $("#remarks").val("")
+                $("#exampleModalLabel").text('Update Query');
                 $('#queryModal').modal('show');
-                $('.new-customer-div').addClass('d-none');
-                $('.existing-customer-div').removeClass('d-none');
-            } else if (result.isDenied) {
-                $('.new-customer-div').removeClass('d-none');
-                $('.existing-customer-div').addClass('d-none');
-                $('#exampleModalToggle').modal('show');
-            }
-        }).catch((dismiss) => {
-            if (dismiss === Swal.DismissReason.cancel) {
-                // Do nothing on cancel
             }
         });
     });
-});
 
-$(document).on("click", ".edit", function() {
-    $("#id").val($(this).data("id"))
-    $(".btnname").html("Update Query");
-    $.ajax({
-        method: "POST",
-        url: "ajax/get-query-details.php",
-        data: {
-            id: $(this).data("id")
-        },
-        success: function(data) {
-            console.log(data);
-            data = JSON.parse(data);
-            $.each(data, function(i, o) {
-                $('input[name=' + i + ']').val(o);
-                $('select[name=' + i + ']').val(o);
-                $('textarea[name=' + i + ']').val(o);
-                if (o == "Follow Up") {
-                    $(".follow_up").show(500)
+    $(document).ready(function() {
+        $(".shareLeadButton").click(function() {
+
+            $("#share_lead_hidden").val($(this).data('id'));
+            queryId = $(this).data('id');
+
+
+            $.ajax({
+                url: 'ajax/getShareCount.php',
+                type: 'POST',
+                data: {
+                    query_id: queryId
+                },
+                success: function(response) {
+                    $("#sharedUsersList").html(response);
+                },
+                error: function() {
+                    alert("Error fetching shared count.");
                 }
-                if (o == "Completed") {
-                    $(".status").hide()
-                }
-            })
-            $("#remarks").val("")
-            $("#exampleModalLabel").text('Update Query');
-            $('#queryModal').modal('show');
-        }
-    });
-});
+            });
 
-$(document).ready(function() {
-    $(".shareLeadButton").click(function() {
-
-        $("#share_lead_hidden").val($(this).data('id'));
-        queryId = $(this).data('id');
-
-
-        $.ajax({
-            url: 'ajax/getShareCount.php',
-            type: 'POST',
-            data: {
-                query_id: queryId
-            },
-            success: function(response) {
-                $("#sharedUsersList").html(response);
-            },
-            error: function() {
-                alert("Error fetching shared count.");
-            }
         });
-
-    });
-});
-
-
-
-
-$('#queryModal').on('shown.bs.modal', function() {
-    $('#customer_id').select2({
-        dropdownParent: $('#queryModal')
-    });
-});
-$('#shareLead').on('shown.bs.modal', function() {
-    $('#multiple_user').select2({
-        dropdownParent: $('#shareLead')
-    });
-});
-
-$(".follow_up").hide()
-$(".sale_amount").hide()
-
-$("#expense_type").on("change", function() {
-    const type = $(this).val();
-    console.log(type);
-    if (type === "vendor") {
-        $(".vendor").show(500);
-        $(".labour").hide(500);
-    } else if (type === "labour") {
-        $(".labour").show(500);
-        $(".vendor").hide(500);
-    } else {
-        $(".vendor").hide(500);
-        $(".labour").hide(500);
-    }
-});
-
-$("#expense_type").on("change", function() {
-    if (!$(this).val()) {
-        $(".category").show(500);
-    } else {
-        $(".category").hide(500);
-        $("#expense_category").val("");
-        $("#expense_subcategory").val("");
-    }
-});
-
-$(".status").show()
-
-
-
-
-
-
-
-$(document).on("click", "#add_notice", function() {
-    let id = $("#id").val();
-    if (id != false) {
-        $("#id").val("")
-        $("#name").val("")
-
-        $("#btnupdate").attr("name", "btnadd");
-        $("#btnupdate").attr("id", "btnadd");
-        $(".btnname").html("Add Query");
-    }
-    $("#exampleModal").modal("show");
-});
-
-$("#status").on("change", function() {
-    if ($(this).val() == "Follow Up") {
-        $(".follow_up").show(500)
-    } else {
-        $(".follow_up").hide(500)
-    }
-    if ($(this).val() == "Converted") {
-        $(".sale_amount").show(300)
-    } else {
-        $(".sale_amount").hide(300)
-    }
-});
-
-$(document).on("click", ".UploadFile", function() {
-    $("#file_id").val($(this).data("id"))
-    $("#UploadModal").modal("show")
-});
-
-$(document).on("click", ".ShowRemarks", function() {
-    $.ajax({
-        method: "POST",
-        url: "ajax/get-remarks.php",
-        data: {
-            id: $(this).data("id")
-        },
-        success: function(data) {
-            data = JSON.parse(data);
-            var row = "";
-            var sno = 1;
-            data.forEach(element => {
-                row += `<tr>
-                     <td>${sno++}</td>
-                     <td>${element.remarks}</td>
-                     <td>${element.call_time}</td>
-                     <td>${element.call_date}</td>
-                     <td>${element.status}</td>
-                     <td>${element.user}</td>
-                     <td>${element.created_at}</td>
-                       </tr>`;
-            });
-            $("#remarksList").html(row);
-
-            $("#ShowRemarks").modal("show")
-        }
     });
 
-});
-
-$(document).on("click", ".ShowImages", function() {
-    $.ajax({
-        method: "POST",
-        url: "ajax/get-files.php",
-        data: {
-            id: $(this).data("id")
-        },
-        success: function(data) {
-            data = JSON.parse(data);
-            var row = "";
-            var sno = 1;
-            data.forEach(element => {
-                var approved = "";
-                if (element.approved == 1) {
-                    approved = "Checked";
-                }
-                row += `<tr>
-                     <td>${sno++}</td>
-                     <td><a href="${element.image}" target="_blank">File </a></td>
-                  
-                     <td><input type="checkbox" class="approved" value="${element.id}" ${approved}></td>
-                     <td>${element.created_at}</td>
-                       </tr>`;
-            });
-            $("#fileList").html(row);
-
-            $("#ShowFile").modal("show")
-        }
+    $('#queryModal').on('shown.bs.modal', function() {
+        $('#customer_id').select2({
+            dropdownParent: $('#queryModal')
+        });
     });
 
-
-});
-
-$("#customer_id").on("change", function() {
-    $("#mobile").val($(this).find(":selected").data("number"))
-    $("#email").val($(this).find(":selected").data("email"))
-})
-$(document).on("click", ".approved", function() {
-    var approved = 0;
-    var id = $(this).val();
-    if ($(this).prop("checked")) {
-        var approved = 1;
-
-    } else {
-
-        var approved = 0;
-    }
-
-    $.ajax({
-        method: "POST",
-        url: "ajax/approved-files.php",
-        data: {
-            id: id,
-            approved: approved
-        },
-        success: function(data) {
-            toastr.success("Save successfully");
-        }
+    $('#shareLead').on('shown.bs.modal', function() {
+        $('#multiple_user').select2({
+            dropdownParent: $('#shareLead')
+        });
     });
-})
 
+    $(".follow_up").hide()
+    $(".sale_amount").hide()
 
-document.getElementById('nextBtn').addEventListener('click', function() {
-    const modal1Fields = document.querySelector('#exampleModalToggle .modal-body');
-    const inputs = modal1Fields.querySelectorAll('input, select, textarea');
-    let isValid = true;
-
-    inputs.forEach(input => {
-        if (!input.checkValidity()) {
-            input.classList.add('is-invalid');
-            isValid = false;
+    $("#expense_type").on("change", function() {
+        const type = $(this).val();
+        console.log(type);
+        if (type === "vendor") {
+            $(".vendor").show(500);
+            $(".labour").hide(500);
+        } else if (type === "labour") {
+            $(".labour").show(500);
+            $(".vendor").hide(500);
         } else {
-            input.classList.remove('is-invalid');
+            $(".vendor").hide(500);
+            $(".labour").hide(500);
         }
     });
-
-    if (isValid) {
-
-        const modal1 = bootstrap.Modal.getInstance(document.getElementById('exampleModalToggle'));
-        modal1.hide();
-        new bootstrap.Modal(document.getElementById('exampleModalToggle2')).show();
-    }
-});
-
-$(document).ready(function() {
-
-    // $("#add_expenses").on("click", function() {
-    //     $("#modalId").modal("show");
-    //     $("#invoice_id").val($(this).data("id"));
-    //     $("#ids").val($(this).data("customer_id"));
-    // });
-
-
-    $("#expenses_for").on("change", function() {
-        $.ajax({
-            method: "POST",
-            url: "ajax/expense-for.php",
-            data: {
-                state: $(this).val()
-            },
-            success: function(data) {
-                $("#ids").html(data);
-            }
-        });
-    });
-
-    $(document).on("click", "#add_notice", function() {
-        let id = $("#id").val();
-        if (id) {
-            $("#id").val("");
-            $("#title").val("");
-            $("#description").html("");
-            $("#sequence").val("");
-            $("#active").val("");
-            $("#btnupdate").attr('name', 'btnadd');
-            $("#btnupdate").attr('id', 'btnadd');
-            $(".btnname").html('Add Category');
-        }
-        $("#exampleModal").modal('show');
-    });
-
-    $(".vendor").hide();
-    $(".labour").hide();
-
-
-
-    $(document).on("click", ".Edit", function() {
-        $("#expense_id").val($(this).data("id"));
-        $("#expense_amount").val($(this).data("amount"));
-        $("#old_amt").val($(this).data("amount"));
-        $("#EditModal").modal("show");
-    });
-
-    $(document).on("click", ".Delete", function() {
-        $("#did").val($(this).data("id"));
-        $("#deleteModal").modal("show");
-    });
-
-    $("#expense_category").on("change", function() {
-        $.ajax({
-            method: "POST",
-            url: "ajax/get-expense-sub-category.php",
-            data: {
-                name: $(this).val()
-            },
-            success: function(data) {
-                $("#expense_subcategory").html(data);
-            }
-        });
-    });
-
-    $(".category").hide();
 
     $("#expense_type").on("change", function() {
         if (!$(this).val()) {
@@ -2137,266 +2061,493 @@ $(document).ready(function() {
             $("#expense_subcategory").val("");
         }
     });
-});
 
+    $(".status").show()
 
-$(document).on("click", "#add_expenses", function() {
+    $(document).on("click", "#add_notice", function() {
+        let id = $("#id").val();
+        if (id != false) {
+            $("#id").val("")
+            $("#name").val("")
 
-    var queryId = $(this).data("id");
-    console.log(queryId);
+            $("#btnupdate").attr("name", "btnadd");
+            $("#btnupdate").attr("id", "btnadd");
+            $(".btnname").html("Add Query");
+        }
+        $("#exampleModal").modal("show");
+    });
 
-    $("#expenseTableBody").empty();
-
-    $.ajax({
-        url: "ajax/getExpenses.php",
-        type: "POST",
-        data: {
-            query_id: queryId
-        },
-        success: function(response) {
-            $("#expenseTableBody").html(response);
-        },
-        error: function() {
-
+    $("#status").on("change", function() {
+        if ($(this).val() == "Follow Up") {
+            $(".follow_up").show(500)
+        } else {
+            $(".follow_up").hide(500)
+        }
+        if ($(this).val() == "Converted") {
+            $(".sale_amount").show(300)
+        } else {
+            $(".sale_amount").hide(300)
         }
     });
 
-})
+    $(document).on("click", ".UploadFile", function() {
+        $("#file_id").val($(this).data("id"))
+        $("#UploadModal").modal("show")
+    });
+
+    $(document).on("click", ".ShowRemarks", function() {
+        $.ajax({
+            method: "POST",
+            url: "ajax/get-remarks.php",
+            data: {
+                id: $(this).data("id")
+            },
+            success: function(data) {
+                data = JSON.parse(data);
+                var row = "";
+                var sno = 1;
+                data.forEach(element => {
+                    row += `<tr>
+                        <td>${sno++}</td>
+                        <td>${element.remarks}</td>
+                        <td>${element.call_time}</td>
+                        <td>${element.call_date}</td>
+                        <td>${element.status}</td>
+                        <td>${element.user}</td>
+                        <td>${element.created_at}</td>
+                        </tr>`;
+                });
+                $("#remarksList").html(row);
+
+                $("#ShowRemarks").modal("show")
+            }
+        });
+
+    });
+
+    $(document).on("click", ".ShowImages", function() {
+        $.ajax({
+            method: "POST",
+            url: "ajax/get-files.php",
+            data: {
+                id: $(this).data("id")
+            },
+            success: function(data) {
+                data = JSON.parse(data);
+                var row = "";
+                var sno = 1;
+                data.forEach(element => {
+                    var approved = "";
+                    if (element.approved == 1) {
+                        approved = "Checked";
+                    }
+                    row += `<tr>
+                        <td>${sno++}</td>
+                        <td><a href="${element.image}" target="_blank">File </a></td>
+                    
+                        <td><input type="checkbox" class="approved" value="${element.id}" ${approved}></td>
+                        <td>${element.created_at}</td>
+                        </tr>`;
+                });
+                $("#fileList").html(row);
+
+                $("#ShowFile").modal("show")
+            }
+        });
 
 
-$(document).on('click', '.pin-query', function() {
-    var queryId = $(this).data('id');
-    var newValue = $(this).data('value');
-    $.ajax({
-        url: 'ajax/update_pin_status.php',
-        type: 'POST',
-        data: {
-            id: queryId,
-            value: newValue
-        },
-        success: function(response) {
-            location.reload(); // reload table to reflect changes
+    });
+
+    $("#customer_id").on("change", function() {
+        $("#mobile").val($(this).find(":selected").data("number"))
+        $("#email").val($(this).find(":selected").data("email"))
+    })
+
+    $(document).on("click", ".approved", function() {
+        var approved = 0;
+        var id = $(this).val();
+        if ($(this).prop("checked")) {
+            var approved = 1;
+
+        } else {
+
+            var approved = 0;
+        }
+
+        $.ajax({
+            method: "POST",
+            url: "ajax/approved-files.php",
+            data: {
+                id: id,
+                approved: approved
+            },
+            success: function(data) {
+                toastr.success("Save successfully");
+            }
+        });
+    })
+
+    document.getElementById('nextBtn').addEventListener('click', function() {
+        const modal1Fields = document.querySelector('#exampleModalToggle .modal-body');
+        const inputs = modal1Fields.querySelectorAll('input, select, textarea');
+        let isValid = true;
+
+        inputs.forEach(input => {
+            if (!input.checkValidity()) {
+                input.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                input.classList.remove('is-invalid');
+            }
+        });
+
+        if (isValid) {
+
+            const modal1 = bootstrap.Modal.getInstance(document.getElementById('exampleModalToggle'));
+            modal1.hide();
+            new bootstrap.Modal(document.getElementById('exampleModalToggle2')).show();
         }
     });
-});
 
-$(document).on("click", ".update_status", function() 
-{
-    $("#hidden_update_id").val($(this).data('id'));
-})
-$(document).on("click", "#payment_button", function() {
-    $("#hidden_query_id").val($(this).data('id'));
-})
-$(document).on("click", "#addSaleAmount", function() {
-    $("#saleAmountView").val($(this).data('sale_amount'));
-    var queryId = $(this).data("id");
+    $(document).ready(function() {
 
-    $("#saleTableBody").empty();
-
-    $.ajax({
-        url: "ajax/getPayments.php",
-        type: "POST",
-        data: {
-            query_id: queryId
-        },
-        success: function(response) {
-            $("#saleTableBody").html(response);
-        },
-        error: function() {
-            alert("Error fetching sale data.");
-        }
-    });
-    $("#hidden_query_id").val(queryId);
-})
-
-$(document).on("click", "#paymentCollect", function() {
-    $("#AddSale").modal('hide');
-    $("#payment_collect").modal('show');
-});
+        // $("#add_expenses").on("click", function() {
+        //     $("#modalId").modal("show");
+        //     $("#invoice_id").val($(this).data("id"));
+        //     $("#ids").val($(this).data("customer_id"));
+        // });
 
 
-$(document).on("click", ".update-paid-status", function() {
-    var expenseId = $(this).data("id");
-
-    Swal.fire({
-        title: 'Are you sure?',
-        text: "You want to mark this as Paid?",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, Mark as Paid!'
-    }).then((result) => {
-        if (result.isConfirmed) {
+        $("#expenses_for").on("change", function() {
             $.ajax({
-                url: "ajax/updatePaidStatus.php",
-                type: "POST",
-                dataType: "json",
+                method: "POST",
+                url: "ajax/expense-for.php",
                 data: {
-                    id: expenseId
+                    state: $(this).val()
+                },
+                success: function(data) {
+                    $("#ids").html(data);
+                }
+            });
+        });
+
+        $(document).on("click", "#add_notice", function() {
+            let id = $("#id").val();
+            if (id) {
+                $("#id").val("");
+                $("#title").val("");
+                $("#description").html("");
+                $("#sequence").val("");
+                $("#active").val("");
+                $("#btnupdate").attr('name', 'btnadd');
+                $("#btnupdate").attr('id', 'btnadd');
+                $(".btnname").html('Add Category');
+            }
+            $("#exampleModal").modal('show');
+        });
+
+        $(".vendor").hide();
+        $(".labour").hide();
+
+
+
+        $(document).on("click", ".Edit", function() {
+            $("#expense_id").val($(this).data("id"));
+            $("#expense_amount").val($(this).data("amount"));
+            $("#old_amt").val($(this).data("amount"));
+            $("#EditModal").modal("show");
+        });
+
+        $(document).on("click", ".Delete", function() {
+            $("#did").val($(this).data("id"));
+            $("#deleteModal").modal("show");
+        });
+
+        $("#expense_category").on("change", function() {
+            $.ajax({
+                method: "POST",
+                url: "ajax/get-expense-sub-category.php",
+                data: {
+                    name: $(this).val()
+                },
+                success: function(data) {
+                    $("#expense_subcategory").html(data);
+                }
+            });
+        });
+
+        $(".category").hide();
+
+        $("#expense_type").on("change", function() {
+            if (!$(this).val()) {
+                $(".category").show(500);
+            } else {
+                $(".category").hide(500);
+                $("#expense_category").val("");
+                $("#expense_subcategory").val("");
+            }
+        });
+    });
+
+    $(document).on("click", "#add_expenses", function() {
+
+        var queryId = $(this).data("id");
+        console.log(queryId);
+
+        $("#expenseTableBody").empty();
+
+        $.ajax({
+            url: "ajax/getExpenses.php",
+            type: "POST",
+            data: {
+                query_id: queryId
+            },
+            success: function(response) {
+                $("#expenseTableBody").html(response);
+            },
+            error: function() {
+
+            }
+        });
+
+    })
+
+    $(document).on('click', '.pin-query', function() {
+        var queryId = $(this).data('id');
+        var newValue = $(this).data('value');
+        $.ajax({
+            url: 'ajax/update_pin_status.php',
+            type: 'POST',
+            data: {
+                id: queryId,
+                value: newValue
+            },
+            success: function(response) {
+                location.reload(); // reload table to reflect changes
+            }
+        });
+    });
+
+    $(document).on("click", ".update_status", function() 
+    {
+        $("#hidden_update_id").val($(this).data('id'));
+    })
+
+    $(document).on("click", "#payment_button", function() {
+        $("#hidden_query_id").val($(this).data('id'));
+    })
+
+    $(document).on("click", "#addSaleAmount", function() {
+        $("#saleAmountView").val($(this).data('sale_amount'));
+        var queryId = $(this).data("id");
+
+        $("#saleTableBody").empty();
+
+        $.ajax({
+            url: "ajax/getPayments.php",
+            type: "POST",
+            data: {
+                query_id: queryId
+            },
+            success: function(response) {
+                $("#saleTableBody").html(response);
+            },
+            error: function() {
+                alert("Error fetching sale data.");
+            }
+        });
+        $("#hidden_query_id").val(queryId);
+    })
+
+    $(document).on("click", "#paymentCollect", function() {
+        $("#AddSale").modal('hide');
+        $("#payment_collect").modal('show');
+    });
+
+    $(document).on("click", ".update-paid-status", function() {
+        var expenseId = $(this).data("id");
+
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "You want to mark this as Paid?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, Mark as Paid!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: "ajax/updatePaidStatus.php",
+                    type: "POST",
+                    dataType: "json",
+                    data: {
+                        id: expenseId
+                    },
+                    success: function(response) {
+                        Swal.fire(
+                            response.title,
+                            response.text,
+                            response.status
+                        );
+
+                        window.location.reload();
+
+                    }
+                });
+            }
+        });
+    });
+
+    $(document).on("click", "#add_expenses", function() {
+        $("#invoice_id").val($(this).data('id'));
+        $("#ids").val($(this).data('customer_id'));
+    })
+
+    $(document).on('click', "#add_expense_button", function() {
+        $('#AddPayment').modal('hide');
+        $('#expense_add').modal('show');
+    })
+
+    function editSaleAmount(queryId, currentAmount) {
+        var newAmount = prompt("Enter new Sale Amount:", currentAmount);
+        if (newAmount != null) {
+            // Call AJAX to update sale amount
+            $.ajax({
+                url: 'ajax/update_sale_amount.php',
+                type: 'POST',
+                data: {
+                    query_id: queryId,
+                    sale_amount: newAmount
                 },
                 success: function(response) {
-                    Swal.fire(
-                        response.title,
-                        response.text,
-                        response.status
-                    );
-
+                    alert(response);
+                    // optionally reload payments data again
                     window.location.reload();
 
                 }
             });
         }
+    }
+
+    function editPaymentAmount(paymentId, currentAmount) {
+        var newAmount = prompt("Enter new Payment Amount:", currentAmount);
+        // console.log(paymentId,currentAmount)
+        if (newAmount != null) {
+            $.ajax({
+                url: 'ajax/update_sale_payment.php',
+                type: 'POST',
+                data: {
+                    payment_id: paymentId,
+                    payment_amount: newAmount
+                },
+                success: function(response) {
+                    alert(response);
+                    window.location.reload();
+                },
+                error: function() {
+                    alert("An error occurred while updating the payment amount.");
+                }
+            });
+        }
+    }
+
+    function deleteUserFromQuery(queryId, userId) {
+        if (confirm("Are you sure you want to remove this user from the lead?")) {
+            $.ajax({
+                url: 'ajax/delete_shared_user.php',
+                type: 'POST',
+                data: {
+                    query_id: queryId,
+                    user_id: userId
+                },
+                success: function(response) {
+                    alert(response);
+                    window.location.reload();
+                },
+                error: function() {
+                    alert("An error occurred while removing the user.");
+                }
+            });
+        }
+    }
+
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+
+    $(document).on("click", "#checkAll", function() {
+        $(".leadCheckbox").prop('checked', $(this).prop('checked'));
     });
-});
 
-$(document).on("click", "#add_expenses", function() {
-    $("#invoice_id").val($(this).data('id'));
-    $("#ids").val($(this).data('customer_id'));
-})
-
-$(document).on('click', "#add_expense_button", function() {
-    $('#AddPayment').modal('hide');
-    $('#expense_add').modal('show');
-})
-
-function editSaleAmount(queryId, currentAmount) {
-    var newAmount = prompt("Enter new Sale Amount:", currentAmount);
-    if (newAmount != null) {
-        // Call AJAX to update sale amount
-        $.ajax({
-            url: 'ajax/update_sale_amount.php',
-            type: 'POST',
-            data: {
-                query_id: queryId,
-                sale_amount: newAmount
-            },
-            success: function(response) {
-                alert(response);
-                // optionally reload payments data again
-                window.location.reload();
-
-            }
-        });
-    }
-}
-
-function editPaymentAmount(paymentId, currentAmount) {
-    var newAmount = prompt("Enter new Payment Amount:", currentAmount);
-    // console.log(paymentId,currentAmount)
-    if (newAmount != null) {
-        $.ajax({
-            url: 'ajax/update_sale_payment.php',
-            type: 'POST',
-            data: {
-                payment_id: paymentId,
-                payment_amount: newAmount
-            },
-            success: function(response) {
-                alert(response);
-                window.location.reload();
-            },
-            error: function() {
-                alert("An error occurred while updating the payment amount.");
-            }
-        });
-    }
-}
-
-function deleteUserFromQuery(queryId, userId) {
-    if (confirm("Are you sure you want to remove this user from the lead?")) {
-        $.ajax({
-            url: 'ajax/delete_shared_user.php',
-            type: 'POST',
-            data: {
-                query_id: queryId,
-                user_id: userId
-            },
-            success: function(response) {
-                alert(response);
-                window.location.reload();
-            },
-            error: function() {
-                alert("An error occurred while removing the user.");
-            }
-        });
-    }
-}
-
-var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
-    return new bootstrap.Tooltip(tooltipTriggerEl)
-})
-
-$(document).on("click", "#checkAll", function() {
-    $(".leadCheckbox").prop('checked', $(this).prop('checked'));
-});
-$('#applyUserFilter').on('click', function() 
-{
-    var userFilter = $('#user_filter').val();
-    var currentStatus = '<?= $currentStatus ?>';
-    if (userFilter) 
+    $('#applyUserFilter').on('click', function() 
     {
-        window.location.href = '?status=' + currentStatus + '&user_filter=' + userFilter;
-    } 
-    else 
+        var userFilter = $('#user_filter').val();
+        var currentStatus = '<?= $currentStatus ?>';
+        if (userFilter) 
+        {
+            window.location.href = '?status=' + currentStatus + '&user_filter=' + userFilter;
+        } 
+        else 
+        {
+            window.location.href = '?status=' + currentStatus;
+        }
+    });
+
+    $(document).on('change', '.leadCheckbox', function() 
     {
-        window.location.href = '?status=' + currentStatus;
+        updateSelectedCount();
+    });
+
+    function updateSelectedCount() 
+    {
+        var selectedCount = $('.leadCheckbox:checked').length;
+        $('#selectedLeadsCount').text(selectedCount);
+        $('#transferLeadsBtn').prop('disabled', selectedCount === 0);
     }
-});
 
-$(document).on('change', '.leadCheckbox', function() 
-{
-    updateSelectedCount();
-});
+    $('#clearSelectionBtn').on('click', function() 
+    {
+        $('.leadCheckbox').prop('checked', false);
+        // $('#checkAll').prop('checked', false);
+        updateSelectedCount();
+    });
 
-function updateSelectedCount() 
-{
-    var selectedCount = $('.leadCheckbox:checked').length;
-    $('#selectedLeadsCount').text(selectedCount);
-    $('#transferLeadsBtn').prop('disabled', selectedCount === 0);
-}
+    // $('#leadTransferForm').on('submit', function(e) 
+    // {
+    //     var selectedCount = $('.leadCheckbox:checked').length;
+    //     var selectedUser = $('#lead_assign_user').val();
 
-$('#clearSelectionBtn').on('click', function() 
-{
-    $('.leadCheckbox').prop('checked', false);
-    // $('#checkAll').prop('checked', false);
-    updateSelectedCount();
-});
+    //     if (selectedCount === 0) 
+    //     {
+    //         e.preventDefault();
+    //         Swal.fire('No Leads Selected', 'Please select at least one lead to transfer.', 'warning');
+    //         return false;
+    //     }
 
-// $('#leadTransferForm').on('submit', function(e) 
-// {
-//     var selectedCount = $('.leadCheckbox:checked').length;
-//     var selectedUser = $('#lead_assign_user').val();
+    //     if (!selectedUser) 
+    //     {
+    //         e.preventDefault();
+    //         Swal.fire('No User Selected', 'Please select a user to transfer the leads to.', 'warning');
+    //         return false;
+    //     }
 
-//     if (selectedCount === 0) 
-//     {
-//         e.preventDefault();
-//         Swal.fire('No Leads Selected', 'Please select at least one lead to transfer.', 'warning');
-//         return false;
-//     }
+    //     Swal.fire({
+    //         title: 'Confirm Transfer',
+    //         text: `Transfer ${selectedCount} lead(s) to the selected user?`,
+    //         icon: 'question',
+    //         showCancelButton: true,
+    //         confirmButtonText: 'Yes, Transfer!'
+    //     }).then((result) => {
+    //         if (result.isConfirmed) 
+    //         {
+    //             $('#leadTransferForm').off('submit').submit();
+    //         }
+    //     });
 
-//     if (!selectedUser) 
-//     {
-//         e.preventDefault();
-//         Swal.fire('No User Selected', 'Please select a user to transfer the leads to.', 'warning');
-//         return false;
-//     }
+    //     return false;
+    //     updateSelectedCount();
+    // });
 
-//     Swal.fire({
-//         title: 'Confirm Transfer',
-//         text: `Transfer ${selectedCount} lead(s) to the selected user?`,
-//         icon: 'question',
-//         showCancelButton: true,
-//         confirmButtonText: 'Yes, Transfer!'
-//     }).then((result) => {
-//         if (result.isConfirmed) 
-//         {
-//             $('#leadTransferForm').off('submit').submit();
-//         }
-//     });
-
-//     return false;
-//     updateSelectedCount();
-// });
 </script>
