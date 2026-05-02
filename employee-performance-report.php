@@ -360,9 +360,85 @@ input[type=number] {
                                             ? date('d M Y H:i', strtotime($row['last_update']))
                                             : 'No Update';
 
+                                        $total_leads = $row['total_queries'] - $row['lost'];   
+
+                                        // B2 - Conversion %
+                                        $b = ($row['conversion_percentage'] >= 40) ? 15 :
+                                            (($row['conversion_percentage'] >= 30) ? 12 :
+                                            (($row['conversion_percentage'] >= 20) ? 9 :
+                                            (($row['conversion_percentage'] >= 10) ? 5 : 2)));
+
+                                        // E2 - Response Time
+                                        $e = ($row['avg_response_time'] <= 15) ? 10 :
+                                            (($row['avg_response_time'] <= 30) ? 8 :
+                                            (($row['avg_response_time'] <= 60) ? 6 :
+                                            (($row['avg_response_time'] <= 1440) ? 4 : 2)));
+
+                                        // F2 - Task Accuracy
+                                        $f = ($row['task_accuracy'] >= 80) ? 10 :
+                                            (($row['task_accuracy'] >= 60) ? 8 :
+                                            (($row['task_accuracy'] >= 40) ? 6 : 4));
+
+                                        // G2 - Add-on Sale
+                                        $g = ($row['add_on_sale'] >= 25000) ? 10 :
+                                            (($row['add_on_sale'] >= 15000) ? 8 :
+                                            (($row['add_on_sale'] >= 8000) ? 6 :
+                                            (($row['add_on_sale'] >= 3000) ? 4 : 2)));
+
+                                        // H2 - Review Quality
+                                        $h = ($row['review_quality'] >= 4) ? 10 :
+                                            (($row['review_quality'] == 3) ? 8 :
+                                            (($row['review_quality'] == 2) ? 6 :
+                                            (($row['review_quality'] == 1) ? 4 : 2)));
+
+                                        // I2 - Total Queries
+                                        $i = ($row['total_queries'] >= 100) ? 3 :
+                                            (($row['total_queries'] >= 80) ? 2 :
+                                            (($row['total_queries'] >= 50) ? 1 : 0));
+
+                                        // J2 - Attendance Missed
+                                        $j = ($row['attendance_days_missed'] <= 0) ? 2 :
+                                            (($row['attendance_days_missed'] <= 2) ? 1 : 0);
+
+                                        // FINAL RESULTS MARKS
+                                        $results_marks = $b + $e + $f + $g + $h + $i + $j;
+
+                                        // K2 - Trainings Missed
+                                        $k = ($row['trainings_missed'] <= 0) ? 5 :
+                                            (($row['trainings_missed'] == 1) ? 3 : 1);
+
+                                        // L2 - Knowledge Applied
+                                        $l = $row['knowledge_applied'];
+
+                                        // M2 - Process Accuracy
+                                        $m = ($row['process_accuracy'] >= 100) ? 5 :
+                                            (($row['process_accuracy'] >= 80) ? 4 :
+                                            (($row['process_accuracy'] >= 60) ? 3 :
+                                            (($row['process_accuracy'] >= 40) ? 2 : 1)));
+
+                                        $skills_marks = $k + $l + $m;
+
+                                        $n = $row['collaboration'];
+                                        $o = $row['ownership'];
+                                        $p = $row['values_data'];
+
+                                        $attitude_marks = $n + $o + $p;
+
+                                        $final_score = $results_marks + $skills_marks + $attitude_marks;
+
+                                        if ($final_score >= 85) {
+                                            $zone = '<span class="badge badge-success">GREEN</span>';
+                                        } elseif ($final_score >= 70) {
+                                            $zone = '<span class="badge badge-warning">AMBER</span>';
+                                        } elseif ($final_score >= 50) {
+                                            $zone = '<span class="badge badge-secondary">GREY</span>';
+                                        } else {
+                                            $zone = '<span class="badge badge-danger">RED</span>';
+                                        }
+
+
                                         echo '
 
-    
                                         <tr data-user-id="' . $row['id'] . '">
                                             <td>' . $sno++ . '</td>
                                             <td><strong>' . htmlspecialchars($row['name']) . '</strong></td>
@@ -382,7 +458,7 @@ input[type=number] {
                                             <td>' . $joining_date . '</td>
                                             <td>' . $status_badge . '</td>
 
-                                            <td>  </td>
+                                           <td><span class="badge badge-dark">'.$total_leads.'</span></td>
 
                                             <td><input type="number" class="form-control save-field" name="add_on_sale" value="'.$row['add_on_sale'].'"></td>
                                             <td><input type="number" class="form-control save-field" name="review_quality" value="'.$row['review_quality'].'"></td>
@@ -394,6 +470,11 @@ input[type=number] {
                                             <td><input type="number" class="form-control save-field" name="collaboration" value="'.$row['collaboration'].'"></td>
                                             <td><input type="number" class="form-control save-field" name="ownership" value="'.$row['ownership'].'"></td>
                                             <td><input type="number" class="form-control save-field" name="values_data" value="'.$row['values_data'].'"></td>
+                                            <td><strong>'.$results_marks.'</strong></td>
+                                            <td><strong>'.$skills_marks.'</strong></td>
+                                            <td><strong>'.$attitude_marks.'</strong></td>
+                                            <td><strong>'.$final_score.'</strong></td>
+                                            <td>'.$zone.'</td>
 
                                         </tr>';
 

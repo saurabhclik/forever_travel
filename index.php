@@ -123,6 +123,117 @@
     {
         $paymentMethods[] = $row;
     }
+
+    $user_id = $_SESSION['id'];
+
+    $user_id = $_SESSION['id'];
+
+// ADD FROM HERE
+$stmt = $mysqli->prepare("
+    SELECT 
+        u.id,
+        u.name,
+        u.add_on_sale,
+        u.review_quality,
+        u.task_accuracy,
+        u.attendance_days_missed,
+        u.trainings_missed,
+        u.knowledge_applied,
+        u.process_accuracy,
+        u.collaboration,
+        u.ownership,
+        u.values_data,
+
+        COUNT(q.id) AS total_queries,
+        SUM(CASE WHEN q.status = 'Converted' THEN 1 ELSE 0 END) AS converted,
+        AVG(TIMESTAMPDIFF(MINUTE, q.created_at, q.updated_at)) AS avg_response_time
+
+    FROM users u
+    LEFT JOIN query_mst q ON u.id = q.user_id
+    WHERE u.id = ?
+");
+
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$res = $stmt->get_result();
+$row = $res->fetch_assoc();
+
+if ($row) {
+
+    $conversion_percentage = ($row['total_queries'] > 0) 
+        ? ($row['converted'] * 100 / $row['total_queries']) : 0;
+
+    $b = ($conversion_percentage >= 40) ? 15 :
+        (($conversion_percentage >= 30) ? 12 :
+        (($conversion_percentage >= 20) ? 9 :
+        (($conversion_percentage >= 10) ? 5 : 2)));
+
+    $e = ($row['avg_response_time'] <= 15) ? 10 :
+        (($row['avg_response_time'] <= 30) ? 8 :
+        (($row['avg_response_time'] <= 60) ? 6 :
+        (($row['avg_response_time'] <= 1440) ? 4 : 2)));
+
+    $f = ($row['task_accuracy'] >= 80) ? 10 :
+        (($row['task_accuracy'] >= 60) ? 8 :
+        (($row['task_accuracy'] >= 40) ? 6 : 4));
+
+    $g = ($row['add_on_sale'] >= 25000) ? 10 :
+        (($row['add_on_sale'] >= 15000) ? 8 :
+        (($row['add_on_sale'] >= 8000) ? 6 :
+        (($row['add_on_sale'] >= 3000) ? 4 : 2)));
+
+    $h = ($row['review_quality'] >= 4) ? 10 :
+        (($row['review_quality'] == 3) ? 8 :
+        (($row['review_quality'] == 2) ? 6 :
+        (($row['review_quality'] == 1) ? 4 : 2)));
+
+    $i = ($row['total_queries'] >= 100) ? 3 :
+        (($row['total_queries'] >= 80) ? 2 :
+        (($row['total_queries'] >= 50) ? 1 : 0));
+
+    $j = ($row['attendance_days_missed'] <= 0) ? 2 :
+        (($row['attendance_days_missed'] <= 2) ? 1 : 0);
+
+    $results_marks = $b + $e + $f + $g + $h + $i + $j;
+
+    $k = ($row['trainings_missed'] <= 0) ? 5 :
+        (($row['trainings_missed'] == 1) ? 3 : 1);
+
+    $l = $row['knowledge_applied'];
+
+    $m = ($row['process_accuracy'] >= 100) ? 5 :
+        (($row['process_accuracy'] >= 80) ? 4 :
+        (($row['process_accuracy'] >= 60) ? 3 :
+        (($row['process_accuracy'] >= 40) ? 2 : 1)));
+
+    $skills_marks = $k + $l + $m;
+
+    $attitude_marks = $row['collaboration'] + $row['ownership'] + $row['values_data'];
+
+    $final_score = $results_marks + $skills_marks + $attitude_marks;
+
+    // ✅ ZONE
+    if ($final_score >= 85) {
+        $alertClass = "success";
+        $message = "🔥 Excellent {$row['name']}! Your performance is outstanding (GREEN Zone)";
+    } elseif ($final_score >= 70) {
+        $alertClass = "warning";
+        $message = "⚠️ Good {$row['name']}, but you can improve (AMBER Zone)";
+    } elseif ($final_score >= 50) {
+        $alertClass = "secondary";
+        $message = "📊 {$row['name']}, average performance (GREY Zone)";
+    } else {
+        $alertClass = "danger";
+        $message = "🚨 {$row['name']}! Poor performance (RED Zone)";
+    }
+
+} else {
+    $alertClass = "info";
+    $message = "Welcome! No performance data found.";
+}
+
+
+
 ?>
 
 <style>
@@ -180,10 +291,19 @@
         border-radius: 4px;
         transition: width 0.5s ease;
     }
+
+    .alert-success {
+    background: #67db93;
+    border-color: #edfaf2;
+    color: white;
+    }
 </style>
 
 <div class="content-body">
     <div class="container-fluid">
+    <div class="alert alert-<?= $alertClass ?> alert-dismissible fade show" role="alert">
+        <?= $message ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>                                
         <div class="row">
             <div class="col-xl-12">
                 <div class="col-xl-12 card h-auto">
