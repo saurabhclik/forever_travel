@@ -856,7 +856,10 @@
                                                                 </button>
                                                             </li>
                                                             <li>
-                                                                <button type="button" class="dropdown-item add_expenses" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#AddPayment" data-customer_id="<?= $row['customer_id'] ?>">📊 Expenses</button>
+                                                                <button type="button" class="dropdown-item add_expenses" 
+                                                                data-id="<?= $row['id'] ?>" data-bs-toggle="modal"
+                                                               data-bs-target="#AddPayment" data-customer_id="<?= $row['customer_id'] ?>">📊 Expenses
+                                                                </button>
                                                             </li>
                                                             <?php endif; ?>
                                                             <?php if($currentStatus == "Converted"): ?>
@@ -1158,6 +1161,7 @@
     </form>
 </div>
 
+<!-- Add Sale Amount -->
 <div class="modal fade payment_collect" id="payment_collect" tabindex="-1" aria-labelledby="exampleModalLabel"
     aria-hidden="true">
     <form class="needs-validation" novalidate method="POST">
@@ -1596,6 +1600,7 @@
     </div>
 </form>
 
+<!-- Add Expence dteails -->
 <div class="modal fade bd-example-modal-lg-expense" id="expense_add" tabindex="-1" role="dialog" aria-hidden="true">
     <form class="needs-validation" novalidate method="post" enctype="multipart/form-data">
         <div class="modal-dialog modal-lg" role="document">
@@ -1724,8 +1729,10 @@
                 </div>
 
                 <div class="modal-footer">
-                    <input type="hidden" id="invoice_id" name="query_id">
-                    <input type="hidden" id="ids" name="ids">
+                    <!-- <input type="hidden" id="invoice_id" name="query_id">
+                    <input type="hidden" id="ids" name="ids"> -->
+                    <input type="hidden" name="query_id" id="expense_query_id">
+                    <input type="hidden" name="ids" id="expense_ids">
                     <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">Close</button>
                     <button type="submit" name="btnSave" id="btnadd" class="btn btn-primary btnname">Save
                         changes</button>
@@ -1735,7 +1742,7 @@
     </form>
 </div>
 
-<!-- add payment modal  -->
+<!-- Sale details modal  -->
 <div class="modal fade" id="AddSale" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -1766,7 +1773,7 @@
                                 <th scope="col">Action</th>
                             </tr>
                         </thead>
-                        <tbody id="paymentTableBody">
+                        <tbody id="saleTableBody">
                             <tr>
                                 <td colspan="6" class="text-center">No Data</td>
                             </tr>
@@ -1820,7 +1827,9 @@
                             </tr>
                         </thead>
                         <tbody id="expenseTableBody">
-
+                             <tr>
+                                <td colspan="13" class="text-center">No data</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -1890,6 +1899,19 @@
         $("#saleAmountView").val(saleAmount);
 
         $("#hidden_query_id").val(id);
+
+    });
+
+    $(document).on("click", ".add_expenses", function () {
+
+    let queryId = $(this).data("id");
+    let customerId = $(this).data("customer_id");
+
+    console.log("Query ID:", queryId);
+    console.log("Customer ID:", customerId);
+
+    $("#expense_query_id").val(queryId);
+    $("#expense_ids").val(customerId);
 
     });
 </script>
@@ -2287,28 +2309,48 @@
         });
     });
 
-    $(document).on("click", "#add_expenses", function() {
+    // $(document).on("click", ".add_expenses", function() {
 
-        var queryId = $(this).data("id");
-        console.log(queryId);
+    //     var queryId = $(this).data("id");
+    //     console.log(queryId);
 
-        $("#expenseTableBody").empty();
+    //     $("#expenseTableBody").empty();
 
-        $.ajax({
-            url: "ajax/getExpenses.php",
-            type: "POST",
-            data: {
-                query_id: queryId
-            },
-            success: function(response) {
-                $("#expenseTableBody").html(response);
-            },
-            error: function() {
+    //     $.ajax({
+    //         url: "ajax/getExpenses.php",
+    //         type: "POST",
+    //         data: {
+    //             query_id: queryId
+    //         },
+    //         success: function(response) {
+    //             $("#expenseTableBody").html(response);
+    //         },
+    //         error: function() {
 
-            }
-        });
+    //         }
+    //     });
 
-    })
+    // })
+
+    $(document).on("click", ".add_expenses", function() {
+
+    var queryId = $(this).data("id");
+    console.log("Expense Query ID:", queryId);
+
+    $("#expense_query_id").val(queryId);
+
+    $("#expenseTableBody").empty();
+
+    $.ajax({
+        url: "ajax/getExpenses.php",
+        type: "POST",
+        data: { query_id: queryId },
+        success: function(response) {
+            $("#expenseTableBody").html(response);
+        }
+    });
+
+    });
 
     $(document).on('click', '.pin-query', function() {
         var queryId = $(this).data('id');
@@ -2335,7 +2377,7 @@
     //     $("#hidden_query_id").val($(this).data('id'));
     // })
 
-    $(document).on("click", "#addSaleAmount", function() {
+    $(document).on("click", ".addSaleAmount", function() {
         $("#saleAmountView").val($(this).data('sale_amount'));
         var queryId = $(this).data("id");
 
@@ -2550,32 +2592,4 @@
 
 </script>
 
-<!-- fetch sales payent detials -->
-<script>
-$(document).on("click", ".payment_button", function () {
 
-    let queryId = $(this).data("id");
-
-    console.log("Clicked ID:", queryId);
-
-    $("#hidden_query_id").val(queryId);
-
-    loadPayments(queryId);
-});
-
-function loadPayments(query_id) {
-    $.ajax({
-        url: "ajax/get_payment.php",
-        type: "POST",
-        data: { query_id: query_id },
-        success: function (response) {
-            console.log("AJAX Response:", response); // debug
-            $("#paymentTableBody").html(response);
-        },
-        error: function (xhr) {
-            console.log(xhr.responseText);
-            alert("Error loading data");
-        }
-    });
-}
-</script>
