@@ -3,6 +3,22 @@
 <?php include "Layouts/Sidebar.php"; ?>
 
 <?php
+
+    if(isset($_SESSION['just_logged_in']) && $_SESSION['just_logged_in'] == true)
+    {
+        $showFollowupPopup = true;
+
+        // remove after first show
+        unset($_SESSION['just_logged_in']);
+    }
+    else
+    {
+        $showFollowupPopup = false;
+    }
+
+?>
+
+<?php
     if (!empty($_GET['month'])) 
     {
         $month = $_GET['month'];
@@ -1949,7 +1965,122 @@ if ($row) {
     </div>
 </div>
 
+<?php if($showFollowupPopup == true): ?>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        let followupModal = new bootstrap.Modal(
+            document.getElementById('followupPopup')
+        );
+
+        followupModal.show();
+
+    });
+    </script>
+
+<?php endif; ?>
 <?php include "Layouts/Footer.php"  ?>
+
+<!-- Follow Up Popup Modal -->
+<div class="modal fade" id="followupPopup" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">
+                    Today's Follow Ups
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Mobile</th>
+                                <th>Call Time</th>
+                                <th>Remarks</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            <?php
+                            $today = date('Y-m-d');
+
+                            if ($_SESSION['user'] == "admin")
+                            {
+                                $stmt = $mysqli->prepare("
+                                    SELECT *
+                                    FROM query_mst
+                                    WHERE status='Follow Up'
+                                    AND call_date=?
+                                    ORDER BY pinned DESC, call_time ASC
+                                ");
+
+                                $stmt->bind_param("s", $today);
+                            }
+                            else
+                            {
+                                $stmt = $mysqli->prepare("
+                                    SELECT *
+                                    FROM query_mst
+                                    WHERE status='Follow Up'
+                                    AND call_date=?
+                                    AND FIND_IN_SET(?, user_id)
+                                    ORDER BY pinned DESC, call_time ASC
+                                ");
+
+                                $stmt->bind_param(
+                                    "si",
+                                    $today,
+                                    $_SESSION['id']
+                                );
+                            }
+
+                            $stmt->execute();
+                            $res = $stmt->get_result();
+
+                            if ($res->num_rows > 0)
+                            {
+                                while($row = $res->fetch_assoc())
+                                {
+                                    echo '
+                                    <tr>
+                                        <td>'.$row['name'].'</td>
+                                        <td>'.$row['mobile'].'</td>
+                                        <td>'.$row['call_time'].'</td>
+                                        <td>'.$row['remarks'].'</td>
+                                    </tr>';
+                                }
+                            }
+                            else
+                            {
+                                echo '
+                                <tr>
+                                    <td colspan="4" class="text-center">
+                                        No Follow Ups Today
+                                    </td>
+                                </tr>';
+                            }
+                            ?>
+
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
     $(document).on("click", ".travel_date", function() 
@@ -2054,5 +2185,15 @@ if ($row) {
     {
         $("#companyform").find("input[type=text], input[type=hidden], input[type=file], textarea, select").val('');
         $(".bd-example-modal-lg").modal("show");
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+    let followupModal = new bootstrap.Modal(
+        document.getElementById('followupPopup')
+    );
+
+    followupModal.show();
+
     });
 </script>
