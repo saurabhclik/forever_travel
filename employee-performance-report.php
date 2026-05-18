@@ -305,6 +305,13 @@ input[type=number] {
                                         ON u.id = q.user_id
                                     WHERE u.role != 'admin'
                                     ";
+                                    if($_SESSION['user'] != 'admin')
+                                    {
+                                        $login_user_id = $_SESSION['id'];
+
+                                        $query .= " AND u.id = '$login_user_id' ";
+                                    }
+
                                     if (!empty($from) && !empty($to)) 
                                     {
                                         $query .= " AND DATE(q.created_at) BETWEEN '$from' AND '$to' ";
@@ -460,16 +467,16 @@ input[type=number] {
 
                                            <td><span class="badge badge-dark">'.$total_leads.'</span></td>
 
-                                            <td><input type="number" class="form-control save-field" name="add_on_sale" value="'.$row['add_on_sale'].'"></td>
-                                            <td><input type="number" class="form-control save-field" name="review_quality" value="'.$row['review_quality'].'"></td>
-                                            <td><input type="number" class="form-control save-field" name="task_accuracy" value="'.$row['task_accuracy'].'"></td>
-                                            <td><input type="number" class="form-control save-field" name="attendance_days_missed" value="'.$row['attendance_days_missed'].'"></td>
-                                            <td><input type="number" class="form-control save-field" name="trainings_missed" value="'.$row['trainings_missed'].'"></td>
-                                            <td><input type="number" class="form-control save-field" name="knowledge_applied" value="'.$row['knowledge_applied'].'"></td>
-                                            <td><input type="number" class="form-control save-field" name="process_accuracy" value="'.$row['process_accuracy'].'"></td>
-                                            <td><input type="number" class="form-control save-field" name="collaboration" value="'.$row['collaboration'].'"></td>
-                                            <td><input type="number" class="form-control save-field" name="ownership" value="'.$row['ownership'].'"></td>
-                                            <td><input type="number" class="form-control save-field" name="values_data" value="'.$row['values_data'].'"></td>
+                                            <td><input type="number" class="form-control save-field" name="add_on_sale" value="'.$row['add_on_sale'].'"  '.($_SESSION['user'] != 'admin' ? 'readonly' : '').'></td>
+                                            <td><input type="number" class="form-control save-field" name="review_quality" value="'.$row['review_quality'].'" '.($_SESSION['user'] != 'admin' ? 'readonly' : '').'></td>
+                                            <td><input type="number" class="form-control save-field" name="task_accuracy" value="'.$row['task_accuracy'].'" '.($_SESSION['user'] != 'admin' ? 'readonly' : '').'></td>
+                                            <td><input type="number" class="form-control save-field" name="attendance_days_missed" value="'.$row['attendance_days_missed'].'" '.($_SESSION['user'] != 'admin' ? 'readonly' : '').'></td>
+                                            <td><input type="number" class="form-control save-field" name="trainings_missed" value="'.$row['trainings_missed'].'" '.($_SESSION['user'] != 'admin' ? 'readonly' : '').'></td>
+                                            <td><input type="number" class="form-control save-field" name="knowledge_applied" value="'.$row['knowledge_applied'].'" '.($_SESSION['user'] != 'admin' ? 'readonly' : '').'></td>
+                                            <td><input type="number" class="form-control save-field" name="process_accuracy" value="'.$row['process_accuracy'].'" '.($_SESSION['user'] != 'admin' ? 'readonly' : '').'></td>
+                                            <td><input type="number" class="form-control save-field" name="collaboration" value="'.$row['collaboration'].'"  '.($_SESSION['user'] != 'admin' ? 'readonly' : '').'></td>
+                                            <td><input type="number" class="form-control save-field" name="ownership" value="'.$row['ownership'].'" '.($_SESSION['user'] != 'admin' ? 'readonly' : '').'></td>
+                                            <td><input type="number" class="form-control save-field" name="values_data" value="'.$row['values_data'].'" '.($_SESSION['user'] != 'admin' ? 'readonly' : '').'></td>
                                             <td><strong>'.$results_marks.'</strong></td>
                                             <td><strong>'.$skills_marks.'</strong></td>
                                             <td><strong>'.$attitude_marks.'</strong></td>

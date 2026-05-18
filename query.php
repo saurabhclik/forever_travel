@@ -1,114 +1,155 @@
 <?php
-    include "Layouts/Header.php";
-    include "Layouts/Sidebar.php";
+include "Layouts/Header.php";
+include "Layouts/Sidebar.php";
 
-    $sale_amount = "";
-    $userFilter = isset($_GET['user_filter']) ? $_GET['user_filter'] : '';
-    $currentStatus = isset($_GET['status']) ? $_GET['status'] : 'All';
+$sale_amount = "";
+$userFilter = isset($_GET['user_filter']) ? $_GET['user_filter'] : '';
+$currentStatus = isset($_GET['status']) ? $_GET['status'] : 'All';
 
-    if (isset($_POST['btnadd'])) 
-    {
-        if (!empty($_POST['id'])) 
-        {
-            try 
-            {
-                $stmt = $mysqli->prepare("UPDATE `query_mst` set `customer_id`=?,`mobile`=?,`email`=?,`destination`=?,`travel_month`=?,`from_date`=?,`to_date`=?,`adult`=?,`child`=?,`service`=?,`user_id`=?,`infant`=?,`source`=?,`priority`=? ,`sale_amount` = ? WHERE id=?");
-                $stmt->bind_param("isssssssssisssii",  $_POST['customer_id'], $_POST['mobile'], $_POST['email'], $_POST['destination'], $_POST['travel_month'], $_POST['from_date'], $_POST['to_date'], $_POST['adult'], $_POST['child'], $_POST['service'], $user['id'], $_POST['infant'], $_POST['source'], $_POST['priority'], $_POST['sale_amount'] , $_POST['id']);
-                $stmt->execute();
-                $stmt->close();
-               
-                alert("Save Successfully", "success", "success");
+if (isset($_POST['btnadd'])) {
+    if (!empty($_POST['id'])) {
+        try {
+            $stmt = $mysqli->prepare("UPDATE `query_mst` set `customer_id`=?,`mobile`=?,`email`=?,`destination`=?,`travel_month`=?,`from_date`=?,`to_date`=?,`adult`=?,`child`=?,`service`=?,`user_id`=?,`infant`=?,`source`=?,`priority`=? ,`sale_amount` = ? WHERE id=?");
+            $stmt->bind_param("isssssssssisssii",  $_POST['customer_id'], $_POST['mobile'], $_POST['email'], $_POST['destination'], $_POST['travel_month'], $_POST['from_date'], $_POST['to_date'], $_POST['adult'], $_POST['child'], $_POST['service'], $user['id'], $_POST['infant'], $_POST['source'], $_POST['priority'], $_POST['sale_amount'], $_POST['id']);
+            $stmt->execute();
+            $stmt->close();
 
-                if ($_POST['status'] == "Converted") 
-                {
-                    redirect("invoices.php");
-                }
-                redirect("?status=" . $_GET['status'] . "");
-            } 
-            catch (Exception $e) 
-            {
-                alert($e->getMessage(), "error", "error");
-                redirect("?status=" . $_GET['status'] . "");
+            alert("Save Successfully", "success", "success");
+
+            if ($_POST['status'] == "Converted") {
+                redirect("invoices.php");
             }
+            redirect("?status=" . $_GET['status'] . "");
+        } catch (Exception $e) {
+            alert($e->getMessage(), "error", "error");
+            redirect("?status=" . $_GET['status'] . "");
         }
-        else 
-        {
-            try 
-            {
-                $stmt = $mysqli->prepare("INSERT into query_mst (customer_id,mobile,email,destination,travel_month,from_date,to_date,adult,child,service,user_id,infant,source,priority)values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-                $stmt->bind_param("isssssssssisss", $_POST['customer_id'], $_POST['mobile'], $_POST['email'], $_POST['destination'], $_POST['travel_month'], $_POST['from_date'], $_POST['to_date'], $_POST['adult'], $_POST['child'], $_POST['service'], $user['id'], $_POST['infant'], $_POST['source'], $_POST['priority']);
-                $stmt->execute();
-                $mst_id = $mysqli->insert_id;
-                $stmt->close();
-             
-                alert("Save Successfully", "success", "success");
-                redirect("?status=" . $_GET['status'] . "");
-            } 
-            catch (Exception $e) 
-            {
-                alert($e->getMessage(), "error", "error");
-                redirect("?status=" . $_GET['status'] . "");
-            }
+    } else {
+        try {
+            $stmt = $mysqli->prepare("INSERT into query_mst (customer_id,mobile,email,destination,travel_month,from_date,to_date,adult,child,service,user_id,infant,source,priority)values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+            $stmt->bind_param("isssssssssisss", $_POST['customer_id'], $_POST['mobile'], $_POST['email'], $_POST['destination'], $_POST['travel_month'], $_POST['from_date'], $_POST['to_date'], $_POST['adult'], $_POST['child'], $_POST['service'], $user['id'], $_POST['infant'], $_POST['source'], $_POST['priority']);
+            $stmt->execute();
+            $mst_id = $mysqli->insert_id;
+            $stmt->close();
+
+            alert("Save Successfully", "success", "success");
+            redirect("?status=" . $_GET['status'] . "");
+        } catch (Exception $e) {
+            alert($e->getMessage(), "error", "error");
+            redirect("?status=" . $_GET['status'] . "");
         }
     }
+}
 
-    // if(isset($_POST['btnSaveStatus']))
-    // {
-    //     // echo '<pre>'; print_r($_POST); exit;
-    //     $stmt = $mysqli->prepare("UPDATE `query_mst` SET `status` = ?, `call_time` = ?, `call_date` = ?, `sale_amount` = ?, `remarks` = ? WHERE `id` = ?");
-    //     $stmt->bind_param("sssssi", $_POST['status'], $_POST['call_time'], $_POST['call_date'], $_POST['sale_amount'], $_POST['remarks'], $_POST['id']);
-    //     $stmt->execute();
-    //     $stmt->close();
+// if(isset($_POST['btnSaveStatus']))
+// {
+//     // echo '<pre>'; print_r($_POST); exit;
+//     $stmt = $mysqli->prepare("UPDATE `query_mst` SET `status` = ?, `call_time` = ?, `call_date` = ?, `sale_amount` = ?, `remarks` = ? WHERE `id` = ?");
+//     $stmt->bind_param("sssssi", $_POST['status'], $_POST['call_time'], $_POST['call_date'], $_POST['sale_amount'], $_POST['remarks'], $_POST['id']);
+//     $stmt->execute();
+//     $stmt->close();
 
-    //     $stmt = $mysqli->prepare("INSERT into `query_det` (`mst_id`,`remarks`,`call_time`,`call_date`,`user_id`,`status`)values (?,?,?,?,?,?)");
-    //     $stmt->bind_param("isssis",   $_POST['id'], $_POST['remarks'], $_POST['call_time'], $_POST['call_date'], $user['id'], $_POST['status']);
-    //     $stmt->execute();
+//     $stmt = $mysqli->prepare("INSERT into `query_det` (`mst_id`,`remarks`,`call_time`,`call_date`,`user_id`,`status`)values (?,?,?,?,?,?)");
+//     $stmt->bind_param("isssis",   $_POST['id'], $_POST['remarks'], $_POST['call_time'], $_POST['call_date'], $user['id'], $_POST['status']);
+//     $stmt->execute();
 
-    //     $_SESSION['alert'] = [
-    //         'title' => 'Lead Updated Successfully',
-    //         'text' => 'The lead details were Updated successfully.',
-    //         'icon' => 'success'
-    //     ];
-    //     redirect("?status=" . $_GET['status'] . "");
-    // }
+//     $_SESSION['alert'] = [
+//         'title' => 'Lead Updated Successfully',
+//         'text' => 'The lead details were Updated successfully.',
+//         'icon' => 'success'
+//     ];
+//     redirect("?status=" . $_GET['status'] . "");
+// }
 
-    if(isset($_POST['btnSaveStatus']))
-    {
+if (isset($_POST['btnSaveStatus'])) {
     $status = $_POST['status'];
     $call_time = $_POST['call_time'];
     $call_date = $_POST['call_date'];
     $sale_amount = $_POST['sale_amount'];
     $remarks = $_POST['remarks'];
 
+    $uploaded_files = [];
+    if (isset($_FILES['followup_attachment']) && !empty($_FILES['followup_attachment']['name'][0])) {
+        $allowed_extensions = ['jpg', 'jpeg', 'png', 'webp'];
+
+        $upload_dir = "uploads/followup/";
+
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0777, true);
+        }
+
+        foreach ($_FILES['followup_attachment']['tmp_name'] as $key => $tmp_name) {
+            $file_name  = $_FILES['followup_attachment']['name'][$key];
+            $file_size  = $_FILES['followup_attachment']['size'][$key];
+            $file_error = $_FILES['followup_attachment']['error'][$key];
+
+            if ($file_error != 0) {
+                continue;
+            }
+
+            // extension
+            $ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+
+            // validate extension
+            if (!in_array($ext, $allowed_extensions)) {
+                alert("Only JPG, JPEG, PNG, WEBP files allowed", "warning", "warning");
+                header("Location: ?status=" . ($_GET['status'] ?? 'All'));
+                exit;
+            }
+
+            // validate size
+            if ($file_size > 1024 * 1024) {
+                alert("Each image must be less than 1MB", "warning", "warning");
+                header("Location: ?status=" . ($_GET['status'] ?? 'All'));
+                exit;
+            }
+
+            // unique name
+            $new_name = time() . '_' . $key . '_' . rand(1000, 9999) . '.' . $ext;
+
+            $target_path = $upload_dir . $new_name;
+
+            if (move_uploaded_file($tmp_name, $target_path)) {
+                $uploaded_files[] = $target_path;
+            }
+        }
+    }
+
+    // convert to json
+    $attachment_json = json_encode($uploaded_files);
+
     // COMMON VALIDATION
-    if(empty($remarks)) {
+    if (empty($remarks)) {
         alert("Remarks is required", "warning", "warning");
+        header("Location: ?status=" . ($_GET['status'] ?? 'All'));
         exit;
     }
 
     // FOLLOW UP VALIDATION
-    if($status == "Follow Up") {
-        if(empty($call_time) || empty($call_date)) {
+    if ($status == "Follow Up") {
+        if (empty($call_time) || empty($call_date)) {
             alert("Please enter call date and call time", "warning", "warning");
+            header("Location: ?status=" . ($_GET['status'] ?? 'All'));
             exit;
         }
     }
 
     // CONVERTED VALIDATION
-    if($status == "Converted") {
-        if(empty($sale_amount) || $sale_amount <= 0) {
+    if ($status == "Converted") {
+        if (empty($sale_amount) || $sale_amount <= 0) {
             alert("Please enter valid sale amount", "warning", "warning");
+            header("Location: ?status=" . ($_GET['status'] ?? 'All'));
             exit;
         }
     }
 
-    $stmt = $mysqli->prepare("UPDATE `query_mst` SET `status`=?, `call_time`=?, `call_date`=?, `sale_amount`=?, `remarks`=? WHERE id=?");
-    $stmt->bind_param("sssssi", $status, $call_time, $call_date, $sale_amount, $remarks, $_POST['id']);
+    $stmt = $mysqli->prepare("UPDATE `query_mst` SET `status`=?, `call_time`=?, `call_date`=?, `followup_attachment`=?, `sale_amount`=?, `remarks`=? WHERE id=?");
+    $stmt->bind_param("sssssi", $status, $call_time, $call_date, $attachment_json, $sale_amount, $remarks, $_POST['id']);
     $stmt->execute();
     $stmt->close();
 
-    $stmt = $mysqli->prepare("INSERT into `query_det` (`mst_id`,`remarks`,`call_time`,`call_date`,`user_id`,`status`) values (?,?,?,?,?,?)");
-    $stmt->bind_param("isssis", $_POST['id'], $remarks, $call_time, $call_date, $user['id'], $status);
+    $stmt = $mysqli->prepare("INSERT into `query_det` (`mst_id`,`remarks`,`call_time`,`call_date`, `followup_attachment`, `user_id`,`status`) values (?,?,?,?,?,?)");
+    $stmt->bind_param("isssis", $_POST['id'], $remarks, $call_time, $call_date, $attachment_json, $user['id'], $status);
     $stmt->execute();
 
     $_SESSION['alert'] = [
@@ -117,271 +158,250 @@
         'icon' => 'success'
     ];
 
-    redirect("?status=" . ($_GET['status'] ?? 'All'));
+    header("Location: ?status=" . ($_GET['status'] ?? 'All'));
+    exit;
+}
+
+if (isset($_POST['btnSavePayment'])) {
+    if (empty($_POST['payment_amount']) || empty($_POST['payment_mode']) || empty($_POST['payment_date']) || empty($_POST['payment_remark'])) {
+        alert("Please fill all required fields.", "warning", "warning");
+        redirect("?status=" . $_GET['status']);
     }
 
-    if (isset($_POST['btnSavePayment'])) 
-    {
-        if (empty($_POST['payment_amount']) || empty($_POST['payment_mode']) || empty($_POST['payment_date']) || empty($_POST['payment_remark'])) {
-            alert("Please fill all required fields.", "warning", "warning");
-            redirect("?status=" . $_GET['status']);
-        }
-
-        if (isset($_POST['query_id']) && !empty($_POST['query_id'])) {
-            $stmt = $mysqli->prepare("SELECT sale_amount,from_date FROM query_mst WHERE id = ?");
-            $stmt->bind_param("i", $_POST['query_id']);
-            $stmt->execute();
-            $stmt->bind_result($sale_amount, $from_date);
-            $stmt->fetch();
-            $stmt->close();
-
-            if (!$sale_amount) {
-                alert("Invalid Query ID.", "error", "error");
-                redirect("?status=" . $_GET['status']);
-            }
-
-            $stmt = $mysqli->prepare("SELECT COALESCE(SUM(amount), 0) FROM payment WHERE query_id = ?");
-            $stmt->bind_param("i", $_POST['query_id']);
-            $stmt->execute();
-            $stmt->bind_result($total_paid);
-            $stmt->fetch();
-            $stmt->close();
-
-            $new_payment = $_POST['payment_amount'];
-            if (($total_paid + $new_payment) > $sale_amount) {
-                alert("Payment exceeds the sale amount. Available balance: " . ($sale_amount - $total_paid), "error", "error");
-                redirect("?status=" . $_GET['status']);
-            }
-
-            $stmt = $mysqli->prepare("INSERT INTO payment (amount, payment_type, ref_no, date, remark, query_id ,user_id) VALUES (?, ?, ?, ?, ?, ?,?)");
-            $stmt->bind_param("sssssii", $_POST['payment_amount'], $_POST['payment_mode'], $_POST['payment_ref_no'], $_POST['payment_date'], $_POST['payment_remark'], $_POST['query_id'], $user['id']);
-            $stmt->execute();
-            $stmt->close();
-
-            $stmt = $mysqli->prepare("SELECT COALESCE(SUM(amount), 0) FROM payment WHERE query_id = ?");
-            $stmt->bind_param("i", $_POST['query_id']);
-            $stmt->execute();
-            $stmt->bind_result($total_paid_after_payment);
-            $stmt->fetch();
-            $stmt->close();
-
-            if ($total_paid_after_payment == $sale_amount) {
-                if (strtotime($from_date) <= strtotime(date('Y-m-d'))) {
-                    $stmt = $mysqli->prepare("UPDATE query_mst SET status = 'Completed', payment_status = 'complete' WHERE id = ?");
-                    $stmt->bind_param("i", $_POST['query_id']);
-                    $stmt->execute();
-                    $stmt->close();
-                } elseif (strtotime($from_date) > strtotime(date('Y-m-d'))) {
-                    $stmt = $mysqli->prepare("UPDATE query_mst SET payment_status = 'complete' WHERE id = ?");
-                    $stmt->bind_param("i", $_POST['query_id']);
-                    $stmt->execute();
-                    $stmt->close();
-                }
-            } elseif ($total_paid_after_payment < $sale_amount) {
-                $stmt = $mysqli->prepare("SELECT payment_status FROM query_mst WHERE id = ?");
-                $stmt->bind_param("i", $_POST['query_id']);
-                $stmt->execute();
-                $stmt->bind_result($current_payment_status);
-                $stmt->fetch();
-                $stmt->close();
-
-                if ($current_payment_status == 'complete') {
-                    $stmt = $mysqli->prepare("UPDATE query_mst SET payment_status = 'pending' WHERE id = ?");
-                    $stmt->bind_param("i", $_POST['query_id']);
-                    $stmt->execute();
-                    $stmt->close();
-                }
-            }
-
-            $_SESSION['alert'] = [
-                'title' => 'Payment Added Successfully',
-                'text' => 'The payment has been recorded.',
-                'icon' => 'success'
-            ];
-           redirect("?status=" . ($_GET['status'] ?? 'All'));
-        } else {
-            alert("Query ID missing.", "error", "error");
-            redirect("?status=" . ($_GET['status'] ?? 'All'));
-        }
-    }
-
-    if(isset($_POST['AddCustomerQuery']))
-    {
-        try
-        {
-            $customer_stmt = $mysqli->prepare("INSERT into `customers` (`name`,`number`,`email`,`address`,`city`,`state`,`pincode`,`country`,`user_id`,`gst_no`,`pan_number`,`number2`,`email2`,`birthday`,`anniversary`,`pre_name`)values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-            $customer_stmt->bind_param("ssssssssisssssss", $_POST['name'],  $_POST['number'], $_POST['email'], $_POST['address'], $_POST['city'], $_POST['state'], $_POST['pincode'], $_POST['country'], $user['id'], $_POST['gst_no'], $_POST['pan_number'], $_POST['number2'], $_POST['email2'], $_POST['birthday'], $_POST['anniversary'], $_POST['pre']);
-            $customer_stmt->execute();
-            $customer_id = $customer_stmt->insert_id;
-
-            $stmt = $mysqli->prepare("INSERT into query_mst (customer_id,mobile,email,destination,travel_month,from_date,to_date,adult,child,service,user_id,infant,source,priority)values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-            $stmt->bind_param("isssssssssisss", $customer_id, $_POST['number'], $_POST['email'], $_POST['destination'], $_POST['travel_month'], $_POST['from_date'], $_POST['to_date'], $_POST['adult'], $_POST['child'], $_POST['service'], $user['id'], $_POST['infant'], $_POST['source'], $_POST['priority']);
-            $stmt->execute();
-            $mst_id = $mysqli->insert_id;
-            $stmt->close();
-
-            $_SESSION['alert'] = [
-                'title' => 'Lead Added Successfully',
-                'text' => 'The customer and lead details were saved successfully.',
-                'icon' => 'success'
-            ];
-            redirect("?status=" . $_GET['status']);
-        }
-        catch(Exception $e)
-        {
-            $_SESSION['alert'] = [
-                'title' => 'Lead Not Added',
-                'text' => 'An error occurred while saving the lead. Please try again.',
-                'icon' => 'error'
-            ];
-            redirect("?status=" . $_GET['status']);
-        }
-    }
-
-    if (isset($_POST['btnUpload']))
-    {
-        if (isset($_FILES['files']['name'])) 
-        {
-            $upload_dir = '../files/';
-            $file_count = count($_FILES['files']['name']);
-            for ($i = 0; $i < $file_count; $i++) 
-            {
-                $pic_name = $_FILES['files']['name'][$i];
-                $pic_tmp_name = $_FILES['files']['tmp_name'][$i];
-
-                $random_name = rand(1000, 10000000000000000) . '-' . $pic_name;
-                $upload_name = $upload_dir . strtolower($random_name);
-                $upload_name = preg_replace('/\s+/', '-', $upload_name);
-
-                try 
-                {
-                    $res = move_uploaded_file($pic_tmp_name, $upload_name);
-                    $stmt = $mysqli->prepare("INSERT into query_imgs(mst_id,image) VALUES(?,?)");
-                    $stmt->bind_param("is", $_POST['id'], $upload_name);
-                    $stmt->execute();
-                    $stmt->close();
-                    alert("Save Successfully", "success", "success");
-                } 
-                catch (Exception $e) 
-                {
-                    alert($e->getMessage(), "error", "error");
-                }
-            }
-        }
-        else 
-        {
-            alert("Image not Selected", "error", "error");
-        }
-        redirect("?status=" . $_GET['status'] . "");
-    }
-
-    if (isset($_POST['btnSave'])) 
-    {
-        try 
-        {
-            $stmt = $mysqli->prepare("SELECT * from customers where id=?");
-            $stmt->bind_param('i', $_POST['ids']);
-            $stmt->execute();
-            $customers = $stmt->get_result()->fetch_assoc();
-
-            $image_path = null;
-            if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-                $target_dir = "./images/invoices/";
-                if (!is_dir($target_dir)) {
-                    mkdir($target_dir, 0777, true);
-                }
-                $image_name = time() . "_" . basename($_FILES["image"]["name"]);
-                $target_file = $target_dir . $image_name;
-
-                if (move_uploaded_file($_FILES["image"]["tmp_name"], $target_file)) {
-                    $image_path = $image_name;
-                } else {
-                    throw new Exception("Image upload failed to $target_file");
-                }
-            }
-
-            if ($_POST['expense_type'] == 'labour') 
-            {
-                $_POST['vendor_id'] = $_POST['labour_id'];
-            }
-
-            $stmt = $mysqli->prepare("INSERT into expenses (expenses_for,ids,name,expense_category,expense_date,amount,file,payment_mode,note,ref_no,vendor_id,user_id,expense_type,query_id,expense_subcategory,build,paid_status)values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-            $stmt->bind_param("sisssdssssiisisss", $_POST['expenses_for'], $_POST['ids'], $_POST['name'], $_POST['expense_category'], $_POST['expense_date'], $_POST['amount'], $image_path, $_POST['payment_mode'], $_POST['note'], $_POST['ref_no'], $_POST['vendor_id'], $user['id'], $_POST['expense_type'], $_POST['query_id'], $_POST['expense_subcategory'], $_POST['build'],$_POST['paid_status']);
-            $stmt->execute();
-
-            alert("Save Successfully", "success", "success");
-            redirect("query?status=converted");
-        } 
-        catch (Exception $e) 
-        {
-            alert($e->getMessage(), "error", "error");
-            redirect("query?status=converted");
-        }
-    }
-
-    if (isset($_POST['ShareLeadAdd'])) 
-    {
-        if (empty($_POST['ShareUser'])) {
-            alert("Please select users to share.", "warning", "warning");
-            redirect("?status=" . $_GET['status'] . "");
-        }
-
-        $query_id = $_POST['query_id'];
-        $stmt = $mysqli->prepare("SELECT user_id FROM query_mst WHERE id = ?");
-        $stmt->bind_param("i", $query_id);
+    if (isset($_POST['query_id']) && !empty($_POST['query_id'])) {
+        $stmt = $mysqli->prepare("SELECT sale_amount,from_date FROM query_mst WHERE id = ?");
+        $stmt->bind_param("i", $_POST['query_id']);
         $stmt->execute();
-        $stmt->bind_result($existing_user_ids_string);
+        $stmt->bind_result($sale_amount, $from_date);
         $stmt->fetch();
         $stmt->close();
 
-        $existing_user_ids = !empty($existing_user_ids_string) ? explode(',', $existing_user_ids_string) : [$_SESSION['id']];
-        $new_user_ids = $_POST['ShareUser'];
-
-        foreach ($new_user_ids as $uid) {
-            if (!in_array($uid, $existing_user_ids)) {
-                $existing_user_ids[] = $uid;
-            }
-        }
-
-        $user_ids_string = implode(',', $existing_user_ids);
-
-        try {
-            $stmt = $mysqli->prepare("UPDATE query_mst SET user_id = ? WHERE id = ?");
-            $stmt->bind_param("si", $user_ids_string, $query_id);
-            $stmt->execute();
-            alert("Lead shared successfully.", "success", "success");
-            redirect("?status=" . $_GET['status'] . "");
-        } catch (Exception $e) {
-            alert("Error: " . $e->getMessage(), "error", "error");
-            redirect("?status=" . $_GET['status'] . "");
-        }
-    }
-
-    if (isset($_POST['leadAllocate'])) 
-    {
-        if (empty($_POST['lead_assign_user']) || empty($_POST['lead_id'])) 
-        {
-            alert("Please select a user and leads to transfer.", "warning", "warning");
+        if (!$sale_amount) {
+            alert("Invalid Query ID.", "error", "error");
             redirect("?status=" . $_GET['status']);
         }
 
-        $Assign_user = $_POST['lead_assign_user'];
-        $leadIds = $_POST['lead_id'];
+        $stmt = $mysqli->prepare("SELECT COALESCE(SUM(amount), 0) FROM payment WHERE query_id = ?");
+        $stmt->bind_param("i", $_POST['query_id']);
+        $stmt->execute();
+        $stmt->bind_result($total_paid);
+        $stmt->fetch();
+        $stmt->close();
 
-        foreach ($leadIds as $leadId) 
-        {
-            $stmt = $mysqli->prepare("UPDATE `query_mst` SET `user_id` = ? WHERE `id` = ?");
-            $stmt->bind_param("ii", $Assign_user, $leadId);
+        $new_payment = $_POST['payment_amount'];
+        if (($total_paid + $new_payment) > $sale_amount) {
+            alert("Payment exceeds the sale amount. Available balance: " . ($sale_amount - $total_paid), "error", "error");
+            redirect("?status=" . $_GET['status']);
+        }
+
+        $stmt = $mysqli->prepare("INSERT INTO payment (amount, payment_type, ref_no, date, remark, query_id ,user_id) VALUES (?, ?, ?, ?, ?, ?,?)");
+        $stmt->bind_param("sssssii", $_POST['payment_amount'], $_POST['payment_mode'], $_POST['payment_ref_no'], $_POST['payment_date'], $_POST['payment_remark'], $_POST['query_id'], $user['id']);
+        $stmt->execute();
+        $stmt->close();
+
+        $stmt = $mysqli->prepare("SELECT COALESCE(SUM(amount), 0) FROM payment WHERE query_id = ?");
+        $stmt->bind_param("i", $_POST['query_id']);
+        $stmt->execute();
+        $stmt->bind_result($total_paid_after_payment);
+        $stmt->fetch();
+        $stmt->close();
+
+        if ($total_paid_after_payment == $sale_amount) {
+            if (strtotime($from_date) <= strtotime(date('Y-m-d'))) {
+                $stmt = $mysqli->prepare("UPDATE query_mst SET status = 'Completed', payment_status = 'complete' WHERE id = ?");
+                $stmt->bind_param("i", $_POST['query_id']);
+                $stmt->execute();
+                $stmt->close();
+            } elseif (strtotime($from_date) > strtotime(date('Y-m-d'))) {
+                $stmt = $mysqli->prepare("UPDATE query_mst SET payment_status = 'complete' WHERE id = ?");
+                $stmt->bind_param("i", $_POST['query_id']);
+                $stmt->execute();
+                $stmt->close();
+            }
+        } elseif ($total_paid_after_payment < $sale_amount) {
+            $stmt = $mysqli->prepare("SELECT payment_status FROM query_mst WHERE id = ?");
+            $stmt->bind_param("i", $_POST['query_id']);
             $stmt->execute();
+            $stmt->bind_result($current_payment_status);
+            $stmt->fetch();
+            $stmt->close();
+
+            if ($current_payment_status == 'complete') {
+                $stmt = $mysqli->prepare("UPDATE query_mst SET payment_status = 'pending' WHERE id = ?");
+                $stmt->bind_param("i", $_POST['query_id']);
+                $stmt->execute();
+                $stmt->close();
+            }
         }
 
         $_SESSION['alert'] = [
-            'title' => 'Lead Transfer Successfully',
-            'text' => count($leadIds) . ' leads successfully transferred.',
+            'title' => 'Payment Added Successfully',
+            'text' => 'The payment has been recorded.',
+            'icon' => 'success'
+        ];
+        redirect("?status=" . ($_GET['status'] ?? 'All'));
+    } else {
+        alert("Query ID missing.", "error", "error");
+        redirect("?status=" . ($_GET['status'] ?? 'All'));
+    }
+}
+
+if (isset($_POST['AddCustomerQuery'])) {
+    try {
+        $customer_stmt = $mysqli->prepare("INSERT into `customers` (`name`,`number`,`email`,`address`,`city`,`state`,`pincode`,`country`,`user_id`,`gst_no`,`pan_number`,`number2`,`email2`,`birthday`,`anniversary`,`pre_name`)values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+        $customer_stmt->bind_param("ssssssssisssssss", $_POST['name'],  $_POST['number'], $_POST['email'], $_POST['address'], $_POST['city'], $_POST['state'], $_POST['pincode'], $_POST['country'], $user['id'], $_POST['gst_no'], $_POST['pan_number'], $_POST['number2'], $_POST['email2'], $_POST['birthday'], $_POST['anniversary'], $_POST['pre']);
+        $customer_stmt->execute();
+        $customer_id = $customer_stmt->insert_id;
+
+        $stmt = $mysqli->prepare("INSERT into query_mst (customer_id,mobile,email,destination,travel_month,from_date,to_date,adult,child,service,user_id,infant,source,priority)values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+        $stmt->bind_param("isssssssssisss", $customer_id, $_POST['number'], $_POST['email'], $_POST['destination'], $_POST['travel_month'], $_POST['from_date'], $_POST['to_date'], $_POST['adult'], $_POST['child'], $_POST['service'], $user['id'], $_POST['infant'], $_POST['source'], $_POST['priority']);
+        $stmt->execute();
+        $mst_id = $mysqli->insert_id;
+        $stmt->close();
+
+        $_SESSION['alert'] = [
+            'title' => 'Lead Added Successfully',
+            'text' => 'The customer and lead details were saved successfully.',
             'icon' => 'success'
         ];
         redirect("?status=" . $_GET['status']);
+    } catch (Exception $e) {
+        $_SESSION['alert'] = [
+            'title' => 'Lead Not Added',
+            'text' => 'An error occurred while saving the lead. Please try again.',
+            'icon' => 'error'
+        ];
+        redirect("?status=" . $_GET['status']);
     }
+}
+
+if (isset($_POST['btnUpload'])) {
+    if (isset($_FILES['files']['name'])) {
+        $upload_dir = '../files/';
+        $file_count = count($_FILES['files']['name']);
+        for ($i = 0; $i < $file_count; $i++) {
+            $pic_name = $_FILES['files']['name'][$i];
+            $pic_tmp_name = $_FILES['files']['tmp_name'][$i];
+
+            $random_name = rand(1000, 10000000000000000) . '-' . $pic_name;
+            $upload_name = $upload_dir . strtolower($random_name);
+            $upload_name = preg_replace('/\s+/', '-', $upload_name);
+
+            try {
+                $res = move_uploaded_file($pic_tmp_name, $upload_name);
+                $stmt = $mysqli->prepare("INSERT into query_imgs(mst_id,image) VALUES(?,?)");
+                $stmt->bind_param("is", $_POST['id'], $upload_name);
+                $stmt->execute();
+                $stmt->close();
+                alert("Save Successfully", "success", "success");
+            } catch (Exception $e) {
+                alert($e->getMessage(), "error", "error");
+            }
+        }
+    } else {
+        alert("Image not Selected", "error", "error");
+    }
+    redirect("?status=" . $_GET['status'] . "");
+}
+
+if (isset($_POST['btnSave'])) {
+    try {
+        $stmt = $mysqli->prepare("SELECT * from customers where id=?");
+        $stmt->bind_param('i', $_POST['ids']);
+        $stmt->execute();
+        $customers = $stmt->get_result()->fetch_assoc();
+
+        $image_path = null;
+        if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+            $target_dir = "./images/invoices/";
+            if (!is_dir($target_dir)) {
+                mkdir($target_dir, 0777, true);
+            }
+            $image_name = time() . "_" . basename($_FILES["image"]["name"]);
+            $target_file = $target_dir . $image_name;
+
+            if (move_uploaded_file($_FILES["image"]["tmp_name"], $target_file)) {
+                $image_path = $image_name;
+            } else {
+                throw new Exception("Image upload failed to $target_file");
+            }
+        }
+
+        if ($_POST['expense_type'] == 'labour') {
+            $_POST['vendor_id'] = $_POST['labour_id'];
+        }
+
+        $stmt = $mysqli->prepare("INSERT into expenses (expenses_for,ids,name,expense_category,expense_date,amount,file,payment_mode,note,ref_no,vendor_id,user_id,expense_type,query_id,expense_subcategory,build,paid_status)values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+        $stmt->bind_param("sisssdssssiisisss", $_POST['expenses_for'], $_POST['ids'], $_POST['name'], $_POST['expense_category'], $_POST['expense_date'], $_POST['amount'], $image_path, $_POST['payment_mode'], $_POST['note'], $_POST['ref_no'], $_POST['vendor_id'], $user['id'], $_POST['expense_type'], $_POST['query_id'], $_POST['expense_subcategory'], $_POST['build'], $_POST['paid_status']);
+        $stmt->execute();
+
+        alert("Save Successfully", "success", "success");
+        redirect("query?status=converted");
+    } catch (Exception $e) {
+        alert($e->getMessage(), "error", "error");
+        redirect("query?status=converted");
+    }
+}
+
+if (isset($_POST['ShareLeadAdd'])) {
+    if (empty($_POST['ShareUser'])) {
+        alert("Please select users to share.", "warning", "warning");
+        redirect("?status=" . $_GET['status'] . "");
+    }
+
+    $query_id = $_POST['query_id'];
+    $stmt = $mysqli->prepare("SELECT user_id FROM query_mst WHERE id = ?");
+    $stmt->bind_param("i", $query_id);
+    $stmt->execute();
+    $stmt->bind_result($existing_user_ids_string);
+    $stmt->fetch();
+    $stmt->close();
+
+    $existing_user_ids = !empty($existing_user_ids_string) ? explode(',', $existing_user_ids_string) : [$_SESSION['id']];
+    $new_user_ids = $_POST['ShareUser'];
+
+    foreach ($new_user_ids as $uid) {
+        if (!in_array($uid, $existing_user_ids)) {
+            $existing_user_ids[] = $uid;
+        }
+    }
+
+    $user_ids_string = implode(',', $existing_user_ids);
+
+    try {
+        $stmt = $mysqli->prepare("UPDATE query_mst SET user_id = ? WHERE id = ?");
+        $stmt->bind_param("si", $user_ids_string, $query_id);
+        $stmt->execute();
+        alert("Lead shared successfully.", "success", "success");
+        redirect("?status=" . $_GET['status'] . "");
+    } catch (Exception $e) {
+        alert("Error: " . $e->getMessage(), "error", "error");
+        redirect("?status=" . $_GET['status'] . "");
+    }
+}
+
+if (isset($_POST['leadAllocate'])) {
+    if (empty($_POST['lead_assign_user']) || empty($_POST['lead_id'])) {
+        alert("Please select a user and leads to transfer.", "warning", "warning");
+        redirect("?status=" . $_GET['status']);
+    }
+
+    $Assign_user = $_POST['lead_assign_user'];
+    $leadIds = $_POST['lead_id'];
+
+    foreach ($leadIds as $leadId) {
+        $stmt = $mysqli->prepare("UPDATE `query_mst` SET `user_id` = ? WHERE `id` = ?");
+        $stmt->bind_param("ii", $Assign_user, $leadId);
+        $stmt->execute();
+    }
+
+    $_SESSION['alert'] = [
+        'title' => 'Lead Transfer Successfully',
+        'text' => count($leadIds) . ' leads successfully transferred.',
+        'icon' => 'success'
+    ];
+    redirect("?status=" . $_GET['status']);
+}
 
 ?>
 
@@ -431,7 +451,7 @@
     .leadCheckbox:checked {
         accent-color: #4caf50;
     }
-    
+
     .transfer-section {
         background: #f8f9fa;
         padding: 15px;
@@ -439,7 +459,7 @@
         margin-bottom: 20px;
         border: 1px solid #e9ecef;
     }
-    
+
     .selected-count-badge {
         background: #28a745;
         color: white;
@@ -448,7 +468,7 @@
         font-size: 12px;
         margin-left: 5px;
     }
-    
+
     .filter-section {
         background: #fff;
         padding: 15px;
@@ -456,7 +476,6 @@
         margin-bottom: 20px;
         border: 1px solid #e9ecef;
     }
-
 </style>
 
 <div class="content-body">
@@ -464,12 +483,12 @@
         <!-- row -->
         <div class="row">
             <div class="col-12">
-                 <div class="card">
+                <div class="card">
                     <div class="card-header">
                         <h4 class="card-title">Query Management</h4>
                         <button type="button" class="btn btn-square btn-outline-danger" id="add-query">Add Query</button>
                     </div>
-                    
+
                     <!-- User Filter Section -->
                     <div class="filter-section mx-3 mt-3">
                         <div class="row align-items-end">
@@ -511,49 +530,51 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Status Buttons -->
                     <div class="query-button m-4 flex-wrap">
                         <a href="?status=All<?= ($userFilter ? '&user_filter=' . $userFilter : '') ?>"
-                            class="btn mt-md-0 mt-2 <?php if ($currentStatus == 'All') echo 'btn-success'; else echo 'btn-primary'; ?>">All</a>
-                       <?php 
+                            class="btn mt-md-0 mt-2 <?php if ($currentStatus == 'All') echo 'btn-success';
+                                                    else echo 'btn-primary'; ?>">All</a>
+                        <?php
                         $stmt = $mysqli->prepare("SELECT * FROM status WHERE name != 'All' AND name != 'Pending'");
                         $stmt->execute();
                         $res = $stmt->get_result();
 
-                        while ($row = $res->fetch_assoc()) 
-                        { 
+                        while ($row = $res->fetch_assoc()) {
                             $statusName = trim($row['name']); // IMPORTANT
                         ?>
                             <a href="?status=<?= $statusName . ($userFilter ? '&user_filter=' . $userFilter : '') ?>"
                                 class="btn mt-md-0 mt-2 <?= ($currentStatus == $statusName) ? 'btn-success' : 'btn-primary'; ?>">
                                 <?= htmlspecialchars($statusName) ?>
                             </a>
-                        <?php 
-                        }  
+                        <?php
+                        }
                         ?>
 
-                         <a href="?status=Booked<?= ($userFilter ? '&user_filter=' . $userFilter : '') ?>"
-                            class="btn mt-md-0 mt-2 <?php if ($currentStatus == 'Booked') echo 'btn-success'; else echo 'btn-primary'; ?>">Booked</a>
+                        <a href="?status=Booked<?= ($userFilter ? '&user_filter=' . $userFilter : '') ?>"
+                            class="btn mt-md-0 mt-2 <?php if ($currentStatus == 'Booked') echo 'btn-success';
+                                                    else echo 'btn-primary'; ?>">Booked</a>
 
-                            <a href="?status=Missed<?= ($userFilter ? '&user_filter=' . $userFilter : '') ?>"
-                            class="btn mt-md-0 mt-2 <?php if ($currentStatus == 'Missed') echo 'btn-success'; else echo 'btn-primary'; ?>">Missed</a>
+                        <a href="?status=Missed<?= ($userFilter ? '&user_filter=' . $userFilter : '') ?>"
+                            class="btn mt-md-0 mt-2 <?php if ($currentStatus == 'Missed') echo 'btn-success';
+                                                    else echo 'btn-primary'; ?>">Missed</a>
                     </div>
-                    
+
                     <div class="card-body">
                         <form action="" method="Post" id="leadTransferForm">
                             <!-- Lead Transfer Section -->
-                            <?php if($_SESSION['user'] == "admin" || $_SESSION['user'] == "Team Manager"): ?>
-                            <div class="transfer-section">
-                                <div class="row align-items-end">
-                                    <div class="col-md-4">
-                                        <label class="form-label fw-bold">
-                                            <i class="fa fa-exchange-alt"></i> Transfer Selected Leads To:
-                                        </label>
-                                        <select name="lead_assign_user" id="lead_assign_user" class="form-control select2" required>
-                                            <option value="">-- Select User --</option>
-                                            <?php
-                                                if($_SESSION['user'] == "admin") {
+                            <?php if ($_SESSION['user'] == "admin" || $_SESSION['user'] == "Team Manager"): ?>
+                                <div class="transfer-section">
+                                    <div class="row align-items-end">
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-bold">
+                                                <i class="fa fa-exchange-alt"></i> Transfer Selected Leads To:
+                                            </label>
+                                            <select name="lead_assign_user" id="lead_assign_user" class="form-control select2" required>
+                                                <option value="">-- Select User --</option>
+                                                <?php
+                                                if ($_SESSION['user'] == "admin") {
                                                     $stmt_user = $mysqli->prepare("SELECT * FROM `users` WHERE `status` = '1' AND `role` != 'admin'");
                                                 } else {
                                                     $stmt_user = $mysqli->prepare("SELECT * FROM `users` WHERE `status` = '1' AND (id = ? OR parent_id = ?) AND role != 'admin'");
@@ -561,48 +582,48 @@
                                                 }
                                                 $stmt_user->execute();
                                                 $res_user = $stmt_user->get_result();
-                                                while($row_user = $res_user->fetch_assoc()):
-                                            ?>
-                                            <option value="<?= $row_user['id'] ?>"><?= htmlspecialchars($row_user['name']) ?> (<?= ucfirst($row_user['role']) ?>)</option>
-                                            <?php endwhile; ?>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label fw-bold">Selected Leads:</label>
-                                        <div>
-                                            <span class="badge badge-primary" id="selectedLeadsCount">0</span>
-                                            <span class="selected-count-badge">leads selected</span>
+                                                while ($row_user = $res_user->fetch_assoc()):
+                                                ?>
+                                                    <option value="<?= $row_user['id'] ?>"><?= htmlspecialchars($row_user['name']) ?> (<?= ucfirst($row_user['role']) ?>)</option>
+                                                <?php endwhile; ?>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label fw-bold">Selected Leads:</label>
+                                            <div>
+                                                <span class="badge badge-primary" id="selectedLeadsCount">0</span>
+                                                <span class="selected-count-badge">leads selected</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-3">
+                                            <button type="submit" name="leadAllocate" class="btn btn-success btn-block" id="transferLeadsBtn" disabled>
+                                                <i class="fa fa-share"></i> Transfer Leads
+                                            </button>
+                                        </div>
+
+                                        <div class="col-md-2">
+                                            <button type="button" class="btn btn-secondary btn-block" id="clearSelectionBtn">
+                                                <i class="fa fa-times"></i> Clear All
+                                            </button>
                                         </div>
                                     </div>
-
-                                    <div class="col-md-3">
-                                        <button type="submit" name="leadAllocate" class="btn btn-success btn-block" id="transferLeadsBtn" disabled>
-                                            <i class="fa fa-share"></i> Transfer Leads
-                                        </button>
-                                    </div>
-
-                                    <div class="col-md-2">
-                                        <button type="button" class="btn btn-secondary btn-block" id="clearSelectionBtn">
-                                            <i class="fa fa-times"></i> Clear All
-                                        </button>
-                                    </div>
                                 </div>
-                            </div>
                             <?php endif; ?>
-                            
+
                             <div class="table-responsive">
                                 <table id="example" class="display" style="min-width: 845px">
                                     <thead>
                                         <tr>
                                             <th>S.No
-                                                <?php if($_SESSION['user'] == "admin" || $_SESSION['user'] == "Team Manager"): ?>
-                                                <br>
-                                                <input type="checkbox" id="checkAll">
-                                                <label for="checkAll" class="ms-1 small">All</label>
+                                                <?php if ($_SESSION['user'] == "admin" || $_SESSION['user'] == "Team Manager"): ?>
+                                                    <br>
+                                                    <input type="checkbox" id="checkAll">
+                                                    <label for="checkAll" class="ms-1 small">All</label>
                                                 <?php endif; ?>
                                             </th>
                                             <th>Lead ID</th>
-                                            <th>User</th>                                        
+                                            <th>User</th>
                                             <th>Customer Info</th>
                                             <th>Destination</th>
                                             <th>Travel Dates</th>
@@ -610,17 +631,16 @@
                                             <th>Service</th>
                                             <th>Follow Up</th>
                                             <th>Status</th>
+                                            <th>Attachment</th>
                                             <th>Remarks</th>
                                             <th>Created</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                    <?php
-                                    
-                                        if ($_SESSION['user'] == "admin") 
-                                        {
-                                            if ($currentStatus == "All")
-                                            {
+                                        <?php
+
+                                        if ($_SESSION['user'] == "admin") {
+                                            if ($currentStatus == "All") {
                                                 $query = "SELECT a.*, b.name as customer, b.number as mobile, b.email, c.name as user, d.name as destination_name
                                                     FROM query_mst a
                                                     LEFT JOIN destinations d ON a.destination = d.id
@@ -629,25 +649,23 @@
                                                     WHERE 1=1";
                                                 $params = [];
                                                 $types = "";
-                                                
+
                                                 if (!empty($userFilter)) {
                                                     $query .= " AND FIND_IN_SET(?, a.user_id)";
                                                     $params[] = $userFilter;
                                                     $types .= "i";
                                                 }
                                                 $query .= " ORDER BY a.pinned DESC, a.id DESC";
-                                                
+
                                                 $stmt = $mysqli->prepare($query);
                                                 if (!empty($params)) {
                                                     $stmt->bind_param($types, ...$params);
                                                 }
-                                            } 
-                                                 else if ($currentStatus == "Missed")
-                                                {
-                                                    $current_date = date("Y-m-d");
-                                                    $current_time = date("H:i:s");
+                                            } else if ($currentStatus == "Missed") {
+                                                $current_date = date("Y-m-d");
+                                                $current_time = date("H:i:s");
 
-                                                    $query = "SELECT a.*, b.name as customer, b.number as mobile, b.email, c.name as user, d.name as destination_name
+                                                $query = "SELECT a.*, b.name as customer, b.number as mobile, b.email, c.name as user, d.name as destination_name
                                                         FROM query_mst a
                                                         LEFT JOIN customers b ON a.customer_id = b.id
                                                         LEFT JOIN destinations d ON a.destination = d.id
@@ -658,23 +676,20 @@
                                                             OR (a.call_date = ? AND a.call_time < ?)
                                                         )";
 
-                                                    $params = [$current_date, $current_date, $current_time];
-                                                    $types = "sss";
+                                                $params = [$current_date, $current_date, $current_time];
+                                                $types = "sss";
 
-                                                    if (!empty($userFilter)) {
-                                                        $query .= " AND FIND_IN_SET(?, a.user_id)";
-                                                        $params[] = $userFilter;
-                                                        $types .= "i";
-                                                    }
-
-                                                    $query .= " ORDER BY a.pinned DESC, a.id DESC";
-
-                                                    $stmt = $mysqli->prepare($query);
-                                                    $stmt->bind_param($types, ...$params);
+                                                if (!empty($userFilter)) {
+                                                    $query .= " AND FIND_IN_SET(?, a.user_id)";
+                                                    $params[] = $userFilter;
+                                                    $types .= "i";
                                                 }
 
-                                            else 
-                                            {
+                                                $query .= " ORDER BY a.pinned DESC, a.id DESC";
+
+                                                $stmt = $mysqli->prepare($query);
+                                                $stmt->bind_param($types, ...$params);
+                                            } else {
                                                 $query = "SELECT a.*, b.name as customer, b.number as mobile, b.email, c.name as user, d.name as destination_name
                                                     FROM query_mst a
                                                     LEFT JOIN customers b ON a.customer_id = b.id
@@ -683,22 +698,19 @@
                                                     WHERE a.status=?";
                                                 $params = [$currentStatus];
                                                 $types = "s";
-                                                
+
                                                 if (!empty($userFilter)) {
                                                     $query .= " AND FIND_IN_SET(?, a.user_id)";
                                                     $params[] = $userFilter;
                                                     $types .= "i";
                                                 }
                                                 $query .= " ORDER BY a.pinned DESC, a.id DESC";
-                                                
+
                                                 $stmt = $mysqli->prepare($query);
                                                 $stmt->bind_param($types, ...$params);
                                             }
-                                        } 
-                                        else if ($_SESSION['user'] == 'Team Manager') 
-                                        {
-                                            if ($currentStatus == "All") 
-                                            {
+                                        } else if ($_SESSION['user'] == 'Team Manager') {
+                                            if ($currentStatus == "All") {
                                                 $query = "SELECT a.*, b.name as customer, b.number as mobile, b.email, c.name as user, d.name as destination_name
                                                     FROM query_mst a
                                                     LEFT JOIN customers b ON a.customer_id = b.id
@@ -709,19 +721,17 @@
                                                     ))";
                                                 $params = [$_SESSION['id'], $_SESSION['id']];
                                                 $types = "ii";
-                                                
+
                                                 if (!empty($userFilter)) {
                                                     $query .= " AND FIND_IN_SET(?, a.user_id)";
                                                     $params[] = $userFilter;
                                                     $types .= "i";
                                                 }
                                                 $query .= " ORDER BY a.pinned DESC, a.id DESC";
-                                                
+
                                                 $stmt = $mysqli->prepare($query);
                                                 $stmt->bind_param($types, ...$params);
-                                            } 
-                                            else 
-                                            {
+                                            } else {
                                                 $query = "SELECT a.*, b.name as customer, b.number as mobile, b.email, c.name as user, d.name as destination_name
                                                     FROM query_mst a
                                                     LEFT JOIN customers b ON a.customer_id = b.id
@@ -733,20 +743,18 @@
                                                     ))";
                                                 $params = [$currentStatus, $_SESSION['id'], $_SESSION['id']];
                                                 $types = "sii";
-                                                
+
                                                 if (!empty($userFilter)) {
                                                     $query .= " AND FIND_IN_SET(?, a.user_id)";
                                                     $params[] = $userFilter;
                                                     $types .= "i";
                                                 }
                                                 $query .= " ORDER BY a.pinned DESC, a.id DESC";
-                                                
+
                                                 $stmt = $mysqli->prepare($query);
                                                 $stmt->bind_param($types, ...$params);
                                             }
-                                        } 
-                                        else 
-                                        {
+                                        } else {
                                             if ($currentStatus == "All") {
                                                 $query = "SELECT a.*, b.name as customer, b.number as mobile, b.email, c.name as user, d.name as destination_name
                                                     FROM query_mst a
@@ -756,19 +764,17 @@
                                                     WHERE FIND_IN_SET(?, a.user_id)";
                                                 $params = [$_SESSION['id']];
                                                 $types = "i";
-                                                
+
                                                 if (!empty($userFilter)) {
                                                     $query .= " AND FIND_IN_SET(?, a.user_id)";
                                                     $params[] = $userFilter;
                                                     $types .= "i";
                                                 }
                                                 $query .= " ORDER BY a.pinned DESC, a.id DESC";
-                                                
+
                                                 $stmt = $mysqli->prepare($query);
                                                 $stmt->bind_param($types, ...$params);
-                                            } 
-                                            else 
-                                            {
+                                            } else {
                                                 $query = "SELECT a.*, b.name as customer, b.number as mobile, b.email, c.name as user, d.name as destination_name
                                                     FROM query_mst a
                                                     LEFT JOIN customers b ON a.customer_id = b.id
@@ -778,172 +784,215 @@
                                                     AND FIND_IN_SET(?, a.user_id)";
                                                 $params = [$currentStatus, $_SESSION['id']];
                                                 $types = "si";
-                                                
+
                                                 if (!empty($userFilter)) {
                                                     $query .= " AND FIND_IN_SET(?, a.user_id)";
                                                     $params[] = $userFilter;
                                                     $types .= "i";
                                                 }
                                                 $query .= " ORDER BY a.pinned DESC, a.id DESC";
-                                                
+
                                                 $stmt = $mysqli->prepare($query);
                                                 $stmt->bind_param($types, ...$params);
                                             }
                                         }
 
-                                        if(isset($stmt)) {
+                                        if (isset($stmt)) {
                                             $stmt->execute();
                                             $res = $stmt->get_result();
                                             $sno = 1;
-                                            while ($row = $res->fetch_assoc())
-                                            {
-                                    ?>
-                                        <tr>
-                                            <td>
-                                                <?= $sno++; ?>
-                                                <?php if($_SESSION['user'] == "admin" || $_SESSION['user'] == "Team Manager"): ?>
-                                                <br>
-                                                <input type="checkbox" class="leadCheckbox" value="<?= $row['id'] ?>" name="lead_id[]">
-                                                <?php endif; ?>
-                                                <?php if($row['pinned']): ?>
-                                                <br>
-                                                <span class="pin-query text-warning" style="cursor:pointer;" data-id="<?= $row['id'] ?>" data-value="0">📌</span>
-                                                <?php endif; ?>
-                                             </div>
-                                            
-                                             <td><?= $row['id']; ?></div>
+                                            while ($row = $res->fetch_assoc()) {
+                                        ?>
+                                                <tr>
+                                                    <td>
+                                                        <?= $sno++; ?>
+                                                        <?php if ($_SESSION['user'] == "admin" || $_SESSION['user'] == "Team Manager"): ?>
+                                                            <br>
+                                                            <input type="checkbox" class="leadCheckbox" value="<?= $row['id'] ?>" name="lead_id[]">
+                                                        <?php endif; ?>
+                                                        <?php if ($row['pinned']): ?>
+                                                            <br>
+                                                            <span class="pin-query text-warning" style="cursor:pointer;" data-id="<?= $row['id'] ?>" data-value="0">📌</span>
+                                                        <?php endif; ?>
+                            </div>
 
-                                            <td>
-                                                <div class="d-flex align-items-center justify-content-between">
-                                                    <span><?= htmlspecialchars($row['user'] ?? 'N/A'); ?></span>
-                                                    <div class="dropdown">
-                                                        <a href="#" role="button" id="dropdownMenuButton<?= $row['id'] ?>" data-bs-toggle="dropdown">
-                                                            <i class="bi bi-three-dots-vertical" style="font-size: 18px;"></i>
-                                                        </a>
-                                                        <ul class="dropdown-menu">
-                                                            <li>
-                                                                <?php if($row['pinned'] == 0): ?>
-                                                                <button type="button" class="dropdown-item pin-query" data-id="<?= $row['id'] ?>" data-value="1">📌 Pin</button>
-                                                                <?php else: ?>
-                                                                <button type="button" class="dropdown-item pin-query" data-id="<?= $row['id'] ?>" data-value="0">❌ Unpin</button>
-                                                                <?php endif; ?>
-                                                            </li>
-                                                            <li><hr class="dropdown-divider"></li>
-                                                            <li>
-                                                                <button type="button" class="dropdown-item edit" data-id="<?= $row['id'] ?>">✏️ Edit Query</button>
-                                                            </li>
-                                                            <li>
-                                                                <button type="button" class="dropdown-item update_status" data-bs-toggle="modal" data-bs-target="#status_change" data-id="<?= $row['id'] ?>">🔄 Update Status</button>
-                                                            </li>
-                                                            <li>
-                                                                <button type="button" class="dropdown-item ShowRemarks" data-id="<?= $row['id'] ?>">💬 Show Remarks</button>
-                                                            </li>
-                                                            <li><hr class="dropdown-divider"></li>
-                                                            <li>
-                                                                <a href="add_quote.php?id=<?= $row['customer_id'] ?>&q_id=<?= $row['id']; ?>" class="dropdown-item">📄 Create Quote</a>
-                                                            </li>
-                                                            <li>
-                                                                <a href="created_quote.php?q_id=<?= $row['id'] ?>&id=<?= $row['customer_id'] ?>" class="dropdown-item">📋 Created Quote</a>
-                                                            </li>
-                                                            <?php if($row['status'] == "Converted"): ?>
-                                                            <li><hr class="dropdown-divider"></li>
-                                                            <li>                               
-                                                                <button type="button" class="dropdown-item addSaleAmount"
-                                                                    data-sale_amount="<?= $row['sale_amount']; ?>"
-                                                                    data-id="<?= $row['id']; ?>"
-                                                                    data-bs-toggle="modal"
-                                                                    data-bs-target="#AddSale">💰 Sale Amount
-                                                                </button>
-                                                            </li>
-                                                            <li>
-                                                                <button type="button" class="dropdown-item add_expenses" 
-                                                                data-id="<?= $row['id'] ?>" data-bs-toggle="modal"
-                                                               data-bs-target="#AddPayment" data-customer_id="<?= $row['customer_id'] ?>">📊 Expenses
-                                                                </button>
-                                                            </li>
-                                                            <?php endif; ?>
-                                                            <?php if($currentStatus == "Converted"): ?>
-                                                            <li>
-                                                                <button type="button" class="dropdown-item payment_button" data-bs-toggle="modal" data-bs-target="#payment_collect" data-id="<?= $row['id'] ?>">💳 Payment Collect</button>
-                                                            </li>
-                                                            <?php endif; ?>
-                                                            <li><hr class="dropdown-divider"></li>
-                                                            <li>
-                                                                <button type="button" class="dropdown-item shareLeadButton" data-bs-toggle="modal" data-id="<?= $row['id']; ?>" data-bs-target="#shareLead">👥 Share Lead</button>
-                                                            </li>
-                                                        </ul>
-                                                    </div>
-                                                </div>
-                                             </div>
-                                             
+                            <td><?= $row['id']; ?>
+                    </div>
 
-                                            <td>
-                                                <strong>Name:</strong> <?= htmlspecialchars($row['customer'] ?? 'N/A'); ?><br>
-                                                <strong>Mobile:</strong> <?= htmlspecialchars($row['mobile'] ?? 'N/A'); ?><br>
-                                                <strong>Email:</strong> <?= htmlspecialchars($row['email'] ?? 'N/A'); ?>
-                                             </div>
-                                            
-                                            <td><?= htmlspecialchars($row['destination_name'] ?? 'N/A'); ?> </div>
-                                            <td>
-                                                <?= htmlspecialchars($row['travel_month'] ?? 'N/A'); ?><br>
-                                                <strong>From:</strong> <?= $row['from_date'] ?? 'N/A'; ?><br>
-                                                <strong>To:</strong> <?= $row['to_date'] ?? 'N/A'; ?>
-                                             </div>
-                                            <td>
-                                                <strong>Adult:</strong> <?= $row['adult'] ?? 0; ?><br>
-                                                <strong>Child:</strong> <?= $row['child'] ?? 0; ?><br>
-                                                <strong>Infant:</strong> <?= $row['infant'] ?? 0; ?>
-                                             </div>
-                                            <td><?= htmlspecialchars($row['service'] ?? 'N/A'); ?> </div>
-                                            <td>
-                                                <?php if(!empty($row['call_time']) && $row['call_time'] != '00:00:00'): ?>
-                                                <strong>Time:</strong> <?= $row['call_time']; ?><br>
-                                                <?php endif; ?>
-                                                <?php if(!empty($row['call_date']) && $row['call_date'] != '0000-00-00'): ?>
-                                                <strong>Date:</strong> <?= $row['call_date']; ?>
-                                                <?php endif; ?>
-                                             </div>
-                                            
-                                            <td>
-                                                <span class="badge bg-info">
-                                                <?= htmlspecialchars($row['status'] ?? 'N/A'); ?>
-                                                </span>
-                                            </td>
+                    <td>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span><?= htmlspecialchars($row['user'] ?? 'N/A'); ?></span>
+                            <div class="dropdown">
+                                <a href="#" role="button" id="dropdownMenuButton<?= $row['id'] ?>" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots-vertical" style="font-size: 18px;"></i>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <?php if ($row['pinned'] == 0): ?>
+                                            <button type="button" class="dropdown-item pin-query" data-id="<?= $row['id'] ?>" data-value="1">📌 Pin</button>
+                                        <?php else: ?>
+                                            <button type="button" class="dropdown-item pin-query" data-id="<?= $row['id'] ?>" data-value="0">❌ Unpin</button>
+                                        <?php endif; ?>
+                                    </li>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                    <li>
+                                        <button type="button" class="dropdown-item edit" data-id="<?= $row['id'] ?>">✏️ Edit Query</button>
+                                    </li>
+                                    <li>
+                                        <button type="button" class="dropdown-item update_status" data-bs-toggle="modal" data-bs-target="#status_change" data-id="<?= $row['id'] ?>">🔄 Update Status</button>
+                                    </li>
+                                    <li>
+                                        <button type="button" class="dropdown-item ShowRemarks" data-id="<?= $row['id'] ?>">💬 Show Remarks</button>
+                                    </li>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                    <li>
+                                        <a href="add_quote.php?id=<?= $row['customer_id'] ?>&q_id=<?= $row['id']; ?>" class="dropdown-item">📄 Create Quote</a>
+                                    </li>
+                                    <li>
+                                        <a href="created_quote.php?q_id=<?= $row['id'] ?>&id=<?= $row['customer_id'] ?>" class="dropdown-item">📋 Created Quote</a>
+                                    </li>
+                                    <?php if ($row['status'] == "Converted"): ?>
+                                        <li>
+                                            <hr class="dropdown-divider">
+                                        </li>
+                                        <li>
+                                            <button type="button" class="dropdown-item addSaleAmount"
+                                                data-sale_amount="<?= $row['sale_amount']; ?>"
+                                                data-id="<?= $row['id']; ?>"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#AddSale">💰 Sale Amount
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button type="button" class="dropdown-item add_expenses"
+                                                data-id="<?= $row['id'] ?>" data-bs-toggle="modal"
+                                                data-bs-target="#AddPayment" data-customer_id="<?= $row['customer_id'] ?>">📊 Expenses
+                                            </button>
+                                        </li>
+                                    <?php endif; ?>
+                                    <?php if ($currentStatus == "Converted"): ?>
+                                        <li>
+                                            <button type="button" class="dropdown-item payment_button" data-bs-toggle="modal" data-bs-target="#payment_collect" data-id="<?= $row['id'] ?>">💳 Payment Collect</button>
+                                        </li>
+                                    <?php endif; ?>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                    <li>
+                                        <button type="button" class="dropdown-item shareLeadButton" data-bs-toggle="modal" data-id="<?= $row['id']; ?>" data-bs-target="#shareLead">👥 Share Lead</button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                </div>
 
-                                            <td>
-                                                <?php 
-                                                    $remarks = isset($row['remarks']) && !empty($row['remarks']) ? $row['remarks'] : '----------'; 
-                                                    if(strlen($remarks) > 30) {
-                                                        $short_remark = substr($remarks, 0, 30) . '...';
-                                                        echo '<span data-bs-toggle="tooltip" title="'.htmlspecialchars($remarks).'">'.htmlspecialchars($short_remark).'</span>';
+
+                <td>
+                    <strong>Name:</strong> <?= htmlspecialchars($row['customer'] ?? 'N/A'); ?><br>
+                    <strong>Mobile:</strong> <?= htmlspecialchars($row['mobile'] ?? 'N/A'); ?><br>
+                    <strong>Email:</strong> <?= htmlspecialchars($row['email'] ?? 'N/A'); ?>
+            </div>
+
+            <td><?= htmlspecialchars($row['destination_name'] ?? 'N/A'); ?>
+        </div>
+        <td>
+            <?= htmlspecialchars($row['travel_month'] ?? 'N/A'); ?><br>
+            <strong>From:</strong> <?= $row['from_date'] ?? 'N/A'; ?><br>
+            <strong>To:</strong> <?= $row['to_date'] ?? 'N/A'; ?>
+    </div>
+    <td>
+        <strong>Adult:</strong> <?= $row['adult'] ?? 0; ?><br>
+        <strong>Child:</strong> <?= $row['child'] ?? 0; ?><br>
+        <strong>Infant:</strong> <?= $row['infant'] ?? 0; ?>
+</div>
+<td><?= htmlspecialchars($row['service'] ?? 'N/A'); ?> </div>
+<td>
+    <?php if (!empty($row['call_time']) && $row['call_time'] != '00:00:00'): ?>
+        <strong>Time:</strong> <?= $row['call_time']; ?><br>
+    <?php endif; ?>
+    <?php if (!empty($row['call_date']) && $row['call_date'] != '0000-00-00'): ?>
+        <strong>Date:</strong> <?= $row['call_date']; ?>
+    <?php endif; ?>
+    </div>
+
+<td>
+    <span class="badge bg-info">
+        <?= htmlspecialchars($row['status'] ?? 'N/A'); ?>
+    </span>
+</td>
+
+<td>
+    <?php
+                                                if (!empty($row['followup_attachment'])) {
+                                                    $images = json_decode($row['followup_attachment'], true);
+
+                                                    if (is_array($images)) {
+                                                        foreach ($images as $img) {
+    ?>
+
+                <a href="<?= $img ?>" target="_blank">
+                    <img
+                        src="<?= $img ?>"
+                        style="
+                                                                        width:55px;
+                                                                        height:55px;
+                                                                        object-fit:cover;
+                                                                        border-radius:10px;
+                                                                        margin:2px;
+                                                                        border:1px solid #ddd;
+                                                                        box-shadow:0 2px 6px rgba(0,0,0,0.15);
+                                                                    ">
+                </a>
+
+    <?php
+                                                        }
                                                     } else {
-                                                        echo htmlspecialchars($remarks);
+                                                        echo "-";
                                                     }
-                                                ?>
-                                             </div>
-                                            <td>
-                                                <?php 
-                                                    if (!empty($row['created_at'])) {
-                                                        echo date("d M Y, h:i A", strtotime($row['created_at']));
-                                                    } else {
-                                                        echo 'N/A';
-                                                    }
-                                                ?>
-                                             </div>
-                                         </div>
-                                        <?php
+                                                } else {
+                                                    echo "-";
+                                                }
+    ?>
+</td>
+
+<td>
+    <?php
+                                                $remarks = isset($row['remarks']) && !empty($row['remarks']) ? $row['remarks'] : '----------';
+                                                if (strlen($remarks) > 30) {
+                                                    $short_remark = substr($remarks, 0, 30) . '...';
+                                                    echo '<span data-bs-toggle="tooltip" title="' . htmlspecialchars($remarks) . '">' . htmlspecialchars($short_remark) . '</span>';
+                                                } else {
+                                                    echo htmlspecialchars($remarks);
+                                                }
+    ?>
+    </div>
+<td>
+    <?php
+                                                if (!empty($row['created_at'])) {
+                                                    echo date("d M Y, h:i A", strtotime($row['created_at']));
+                                                } else {
+                                                    echo 'N/A';
+                                                }
+    ?>
+    </div>
+    </div>
+<?php
                                             }
                                         }
-                                        ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+?>
+</tbody>
+</table>
+</div>
+</form>
+</div>
+</div>
+</div>
+</div>
+</div>
 </div>
 
 <div class="modal fade bd-example-modal-lg" id="queryModal" tabindex="-1" aria-labelledby="exampleModalLabel"
@@ -964,14 +1013,13 @@
                             <select class="form-control" id="customer_id" name="customer_id" value="" required>
                                 <option value="">Select Client</option>
                                 <?php
-                                    $stmt = $mysqli->prepare("SELECT * from  customers  order by id desc");
-                                    $stmt->execute();
-                                    $res = $stmt->get_result();
+                                $stmt = $mysqli->prepare("SELECT * from  customers  order by id desc");
+                                $stmt->execute();
+                                $res = $stmt->get_result();
 
-                                    while ($row = $res->fetch_assoc()) 
-                                    {
-                                        echo '<option value="' . $row['id'] . '"   data-number="' . $row['number'] . '"    data-email="' . $row['email'] . '">' . $row['name'] . '</option>';
-                                    }
+                                while ($row = $res->fetch_assoc()) {
+                                    echo '<option value="' . $row['id'] . '"   data-number="' . $row['number'] . '"    data-email="' . $row['email'] . '">' . $row['name'] . '</option>';
+                                }
                                 ?>
                             </select>
                         </div>
@@ -983,20 +1031,19 @@
                             <label for="name" class="form-label">Email</label>
                             <input type="email" class="form-control" id="email" name="email" value="">
                         </div>
-                   
+
                         <div class="col-md-6">
                             <label for="" class="form-label">Destination</label>
-                              <select class="form-control" id="destination" name="destination" value="" required>
+                            <select class="form-control" id="destination" name="destination" value="" required>
                                 <option value="">Select Destination</option>
                                 <?php
-                                    $stmt = $mysqli->prepare("SELECT * from  destinations  order by id desc");
-                                    $stmt->execute();
-                                    $res = $stmt->get_result();
+                                $stmt = $mysqli->prepare("SELECT * from  destinations  order by id desc");
+                                $stmt->execute();
+                                $res = $stmt->get_result();
 
-                                    while ($row = $res->fetch_assoc()) 
-                                    {
-                                        echo '<option value="' . $row['id'] . '">' . $row['name'] . '</option>';
-                                    }
+                                while ($row = $res->fetch_assoc()) {
+                                    echo '<option value="' . $row['id'] . '">' . $row['name'] . '</option>';
+                                }
                                 ?>
                             </select>
                         </div>
@@ -1044,14 +1091,13 @@
                             <select class="form-control" id="source" name="source" value="">
                                 <option value="">Select Source</option>
                                 <?php
-                                    $stmt = $mysqli->prepare("SELECT * from  source  ");
-                                    $stmt->execute();
-                                    $res = $stmt->get_result();
+                                $stmt = $mysqli->prepare("SELECT * from  source  ");
+                                $stmt->execute();
+                                $res = $stmt->get_result();
 
-                                    while ($row = $res->fetch_assoc()) 
-                                    {
-                                        echo '<option value="' . $row['name'] . '">' . $row['name'] . '</option>';
-                                    }
+                                while ($row = $res->fetch_assoc()) {
+                                    echo '<option value="' . $row['name'] . '">' . $row['name'] . '</option>';
+                                }
                                 ?>
                             </select>
                         </div>
@@ -1062,14 +1108,13 @@
                             <select class="form-control" id="priority" name="priority" value="">
                                 <option value="">Select Priority</option>
                                 <?php
-                                    $stmt = $mysqli->prepare("SELECT * from  priority  ");
-                                    $stmt->execute();
-                                    $res = $stmt->get_result();
+                                $stmt = $mysqli->prepare("SELECT * from  priority  ");
+                                $stmt->execute();
+                                $res = $stmt->get_result();
 
-                                    while ($row = $res->fetch_assoc()) 
-                                    {
-                                        echo '<option value="' . $row['name'] . '">' . $row['name'] . '</option>';
-                                    }
+                                while ($row = $res->fetch_assoc()) {
+                                    echo '<option value="' . $row['name'] . '">' . $row['name'] . '</option>';
+                                }
                                 ?>
                             </select>
                         </div>
@@ -1079,19 +1124,18 @@
                             <select class="form-control" id="service" name="service" value="">
                                 <option value="">Select Service</option>
                                 <?php
-                                    $stmt = $mysqli->prepare("SELECT * from  service  ");
-                                    $stmt->execute();
-                                    $res = $stmt->get_result();
+                                $stmt = $mysqli->prepare("SELECT * from  service  ");
+                                $stmt->execute();
+                                $res = $stmt->get_result();
 
-                                    while ($row = $res->fetch_assoc()) 
-                                    {
-                                        echo '<option value="' . $row['name'] . '">' . $row['name'] . '</option>';
-                                    }
+                                while ($row = $res->fetch_assoc()) {
+                                    echo '<option value="' . $row['name'] . '">' . $row['name'] . '</option>';
+                                }
                                 ?>
                             </select>
                         </div>
 
-                        
+
 
 
                     </div>
@@ -1108,7 +1152,7 @@
 
 <div class="modal fade status_change" id="status_change" tabindex="-1" aria-labelledby="exampleModalLabel"
     aria-hidden="true">
-    <form class="needs-validation" novalidate method="POST">
+    <form class="needs-validation" novalidate method="POST" enctype="multipart/form-data">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
@@ -1134,19 +1178,34 @@
                         </div>
                         <div class="col-md-6 follow_up">
                             <label for="">Call Time</label>
-                            <input type="time" name="call_time" id="call_time" class="form-control" >
+                            <input type="time" name="call_time" id="call_time" class="form-control">
                         </div>
                         <div class="col-md-6 follow_up">
                             <label for="">Call Date</label>
-                            <input type="date" name="call_date" id="call_date" class="form-control" >
+                            <input type="date" name="call_date" id="call_date" class="form-control">
+                        </div>
+                        <div class="col-md-6 follow_up">
+                            <label for="">Attachment</label>
+
+                            <input
+                                type="file"
+                                name="followup_attachment[]"
+                                id="followup_attachment"
+                                class="form-control"
+                                multiple
+                                accept="image/*">
+                            <small class="text-muted"> Upload multiple images
+                                JPG, PNG, PDF, DOC, XLS <br>
+                                Max Size: 1MB Each
+                            </small>
                         </div>
                         <div class="col-md-6 sale_amount">
                             <label for="">Sale Amount</label>
-                            <input type="number" name="sale_amount" id="sale_amount" class="form-control" >
+                            <input type="number" name="sale_amount" id="sale_amount" class="form-control">
                         </div>
                         <div class="col-md-12">
                             <label for="name" class="form-label">Remarks</label>
-                            <textarea class="form-control" id="remarks" name="remarks" value=""require></textarea>
+                            <textarea class="form-control" id="remarks" name="remarks" value="" require></textarea>
                         </div>
                     </div>
                 </div>
@@ -1403,15 +1462,15 @@
                             <select class="form-control" id="state" name="state">
                                 <option value="" disabled selected>Select State</option>
                                 <?php
-                                    $stmt = $mysqli->prepare("SELECT  distinct state FROM `state_district`");
-                               
-                                    $stmt->execute();
-                                    $category = $stmt->get_result();
-                                    while ($row = $category->fetch_assoc()) {
-                                        echo '<option value="' . $row['state'] . '">' . $row['state'] . '</option>';
-                                    }
+                                $stmt = $mysqli->prepare("SELECT  distinct state FROM `state_district`");
 
-                                    ?>
+                                $stmt->execute();
+                                $category = $stmt->get_result();
+                                while ($row = $category->fetch_assoc()) {
+                                    echo '<option value="' . $row['state'] . '">' . $row['state'] . '</option>';
+                                }
+
+                                ?>
                             </select>
                         </div>
                         <div class="col-md-6 mt-2">
@@ -1434,15 +1493,15 @@
                             <select class="form-control" id="country" name="country">
                                 <option value="" disabled selected>Select Country</option>
                                 <?php
-                                    $stmt = $mysqli->prepare("SELECT * FROM countries");
-                                    //   $stmt->bind_param("s", $_COOKIE['token']);
-                                    $stmt->execute();
-                                    $countries = $stmt->get_result();
-                                    while ($row = $countries->fetch_assoc()) {
-                                        echo '<option value="' . $row['en_short_name'] . '">' . $row['en_short_name'] . '</option>';
-                                    }
+                                $stmt = $mysqli->prepare("SELECT * FROM countries");
+                                //   $stmt->bind_param("s", $_COOKIE['token']);
+                                $stmt->execute();
+                                $countries = $stmt->get_result();
+                                while ($row = $countries->fetch_assoc()) {
+                                    echo '<option value="' . $row['en_short_name'] . '">' . $row['en_short_name'] . '</option>';
+                                }
 
-                                    ?>
+                                ?>
                             </select>
                         </div>
 
@@ -1485,14 +1544,13 @@
                             <select class="form-control" name="destination" value="" required>
                                 <option value="">Select Destination</option>
                                 <?php
-                                    $stmt = $mysqli->prepare("SELECT * from  destinations  order by id desc");
-                                    $stmt->execute();
-                                    $res = $stmt->get_result();
+                                $stmt = $mysqli->prepare("SELECT * from  destinations  order by id desc");
+                                $stmt->execute();
+                                $res = $stmt->get_result();
 
-                                    while ($row = $res->fetch_assoc()) 
-                                    {
-                                        echo '<option value="' . $row['id'] . '">' . $row['name'] . '</option>';
-                                    }
+                                while ($row = $res->fetch_assoc()) {
+                                    echo '<option value="' . $row['id'] . '">' . $row['name'] . '</option>';
+                                }
                                 ?>
                             </select>
                         </div>
@@ -1539,15 +1597,14 @@
                             <select class="form-control" id="source" name="source" value="">
                                 <option value="">Select Source</option>
                                 <?php
-                                        $stmt = $mysqli->prepare("SELECT * from  `source`  ");
-                                        $stmt->execute();
-                                        $res = $stmt->get_result();
+                                $stmt = $mysqli->prepare("SELECT * from  `source`  ");
+                                $stmt->execute();
+                                $res = $stmt->get_result();
 
-                                        while ($row = $res->fetch_assoc()) 
-                                        {
-                                            echo '<option value="' . $row['name'] . '">' . $row['name'] . '</option>';
-                                        }
-                                    ?>
+                                while ($row = $res->fetch_assoc()) {
+                                    echo '<option value="' . $row['name'] . '">' . $row['name'] . '</option>';
+                                }
+                                ?>
                             </select>
                         </div>
 
@@ -1557,14 +1614,13 @@
                             <select class="form-control" id="priority" name="priority" value="">
                                 <option value="">Select Priority</option>
                                 <?php
-                                    $stmt = $mysqli->prepare("SELECT * from  `priority`  ");
-                                    $stmt->execute();
-                                    $res = $stmt->get_result();
+                                $stmt = $mysqli->prepare("SELECT * from  `priority`  ");
+                                $stmt->execute();
+                                $res = $stmt->get_result();
 
-                                    while ($row = $res->fetch_assoc()) 
-                                    {
-                                        echo '<option value="' . $row['name'] . '">' . $row['name'] . '</option>';
-                                    }
+                                while ($row = $res->fetch_assoc()) {
+                                    echo '<option value="' . $row['name'] . '">' . $row['name'] . '</option>';
+                                }
                                 ?>
                             </select>
                         </div>
@@ -1574,15 +1630,14 @@
                             <select class="form-control" id="service" name="service" value="">
                                 <option value="">Select Service</option>
                                 <?php
-                                        $stmt = $mysqli->prepare("SELECT * from  `service`  ");
-                                        $stmt->execute();
-                                        $res = $stmt->get_result();
+                                $stmt = $mysqli->prepare("SELECT * from  `service`  ");
+                                $stmt->execute();
+                                $res = $stmt->get_result();
 
-                                        while ($row = $res->fetch_assoc()) 
-                                        {
-                                            echo '<option value="' . $row['name'] . '">' . $row['name'] . '</option>';
-                                        }
-                                    ?>
+                                while ($row = $res->fetch_assoc()) {
+                                    echo '<option value="' . $row['name'] . '">' . $row['name'] . '</option>';
+                                }
+                                ?>
                             </select>
                         </div>
 
@@ -1648,12 +1703,12 @@
                             <select class="form-control" id="vendor_id" name="vendor_id">
                                 <option value="">Select Vendor</option>
                                 <?php
-                                    $stmt = $mysqli->prepare("SELECT * FROM vendor WHERE user_type='vendor'");
-                                    $stmt->execute();
-                                    $category = $stmt->get_result();
-                                    while ($row = $category->fetch_assoc()) {
-                                        echo '<option value="' . $row['id'] . '">' . $row['name'] . '</option>';
-                                    }
+                                $stmt = $mysqli->prepare("SELECT * FROM vendor WHERE user_type='vendor'");
+                                $stmt->execute();
+                                $category = $stmt->get_result();
+                                while ($row = $category->fetch_assoc()) {
+                                    echo '<option value="' . $row['id'] . '">' . $row['name'] . '</option>';
+                                }
                                 ?>
                             </select>
                         </div>
@@ -1663,13 +1718,13 @@
                             <select class="form-control" id="labour_id" name="labour_id">
                                 <option value="">Select Labour</option>
                                 <?php
-                    $stmt = $mysqli->prepare("SELECT * FROM vendor WHERE user_type='labour'");
-                    $stmt->execute();
-                    $category = $stmt->get_result();
-                    while ($row = $category->fetch_assoc()) {
-                        echo '<option value="' . $row['id'] . '">' . $row['name'] . '</option>';
-                    }
-                ?>
+                                $stmt = $mysqli->prepare("SELECT * FROM vendor WHERE user_type='labour'");
+                                $stmt->execute();
+                                $category = $stmt->get_result();
+                                while ($row = $category->fetch_assoc()) {
+                                    echo '<option value="' . $row['id'] . '">' . $row['name'] . '</option>';
+                                }
+                                ?>
                             </select>
                         </div>
                         <div class="col-6 mt-3 category">
@@ -1677,13 +1732,13 @@
                             <select name="expense_category" id="expense_category" class="form-control">
                                 <option value="">Select</option>
                                 <?php
-                    $stmt = $mysqli->prepare("SELECT * FROM expense_category WHERE active=1");
-                    $stmt->execute();
-                    $category = $stmt->get_result();
-                    while ($row = $category->fetch_assoc()) {
-                        echo '<option value="' . $row['name'] . '">' . $row['name'] . '</option>';
-                    }
-                ?>
+                                $stmt = $mysqli->prepare("SELECT * FROM expense_category WHERE active=1");
+                                $stmt->execute();
+                                $category = $stmt->get_result();
+                                while ($row = $category->fetch_assoc()) {
+                                    echo '<option value="' . $row['name'] . '">' . $row['name'] . '</option>';
+                                }
+                                ?>
                             </select>
                         </div>
 
@@ -1827,7 +1882,7 @@
                             </tr>
                         </thead>
                         <tbody id="expenseTableBody">
-                             <tr>
+                            <tr>
                                 <td colspan="13" class="text-center">No data</td>
                             </tr>
                         </tbody>
@@ -1860,16 +1915,16 @@
                     <div class="row">
                         <div class="col-12">
                             <select name="ShareUser[]" class="form-control" id="multiple_user" multiple>
-                                <?php 
+                                <?php
                                 $stmt = $mysqli->prepare("Select * from users where status = '1'");
                                 $stmt->execute();
                                 $res = $stmt->get_result();
-                                while($row = $res->fetch_assoc()):                                
+                                while ($row = $res->fetch_assoc()):
                                 ?>
-                                <option value="<?= $row['id'] ?>"
-                                    <?php if(isset($_GET['user']) && $_GET['user'] == $row['id']) echo 'selected'; ?>>
-                                    <?= $row['username'] ?>
-                                </option>
+                                    <option value="<?= $row['id'] ?>"
+                                        <?php if (isset($_GET['user']) && $_GET['user'] == $row['id']) echo 'selected'; ?>>
+                                        <?= $row['username'] ?>
+                                    </option>
 
                                 <?php endwhile; ?>
                             </select>
@@ -1892,9 +1947,9 @@
 </div>
 
 <script>
-    $(document).on("click", ".addSaleAmount", function () {
-        
-        let saleAmount = $(this).data("sale_amount"); 
+    $(document).on("click", ".addSaleAmount", function() {
+
+        let saleAmount = $(this).data("sale_amount");
         let id = $(this).data("id");
         $("#saleAmountView").val(saleAmount);
 
@@ -1902,22 +1957,22 @@
 
     });
 
-    $(document).on("click", ".add_expenses", function () {
+    $(document).on("click", ".add_expenses", function() {
 
-    let queryId = $(this).data("id");
-    let customerId = $(this).data("customer_id");
+        let queryId = $(this).data("id");
+        let customerId = $(this).data("customer_id");
 
-    console.log("Query ID:", queryId);
-    console.log("Customer ID:", customerId);
+        console.log("Query ID:", queryId);
+        console.log("Customer ID:", customerId);
 
-    $("#expense_query_id").val(queryId);
-    $("#expense_ids").val(customerId);
+        $("#expense_query_id").val(queryId);
+        $("#expense_ids").val(customerId);
 
     });
 </script>
 
 <script>
-    document.getElementById("btnSaveStatus").addEventListener("click", function(e){
+    document.getElementById("btnSaveStatus").addEventListener("click", function(e) {
 
         let status = document.getElementById("status").value;
         let callTime = document.getElementById("call_time").value;
@@ -1957,7 +2012,6 @@
 </script>
 
 <script>
-
     $(document).ready(function() {
         $('#add-query').on('click', function() {
             Swal.fire({
@@ -2334,21 +2388,23 @@
 
     $(document).on("click", ".add_expenses", function() {
 
-    var queryId = $(this).data("id");
-    console.log("Expense Query ID:", queryId);
+        var queryId = $(this).data("id");
+        console.log("Expense Query ID:", queryId);
 
-    $("#expense_query_id").val(queryId);
+        $("#expense_query_id").val(queryId);
 
-    $("#expenseTableBody").empty();
+        $("#expenseTableBody").empty();
 
-    $.ajax({
-        url: "ajax/getExpenses.php",
-        type: "POST",
-        data: { query_id: queryId },
-        success: function(response) {
-            $("#expenseTableBody").html(response);
-        }
-    });
+        $.ajax({
+            url: "ajax/getExpenses.php",
+            type: "POST",
+            data: {
+                query_id: queryId
+            },
+            success: function(response) {
+                $("#expenseTableBody").html(response);
+            }
+        });
 
     });
 
@@ -2368,8 +2424,7 @@
         });
     });
 
-    $(document).on("click", ".update_status", function() 
-    {
+    $(document).on("click", ".update_status", function() {
         $("#hidden_update_id").val($(this).data('id'));
     })
 
@@ -2521,34 +2576,27 @@
         $(".leadCheckbox").prop('checked', $(this).prop('checked'));
     });
 
-    $('#applyUserFilter').on('click', function() 
-    {
+    $('#applyUserFilter').on('click', function() {
         var userFilter = $('#user_filter').val();
         var currentStatus = '<?= $currentStatus ?>';
-        if (userFilter) 
-        {
+        if (userFilter) {
             window.location.href = '?status=' + currentStatus + '&user_filter=' + userFilter;
-        } 
-        else 
-        {
+        } else {
             window.location.href = '?status=' + currentStatus;
         }
     });
 
-    $(document).on('change', '.leadCheckbox', function() 
-    {
+    $(document).on('change', '.leadCheckbox', function() {
         updateSelectedCount();
     });
 
-    function updateSelectedCount() 
-    {
+    function updateSelectedCount() {
         var selectedCount = $('.leadCheckbox:checked').length;
         $('#selectedLeadsCount').text(selectedCount);
         $('#transferLeadsBtn').prop('disabled', selectedCount === 0);
     }
 
-    $('#clearSelectionBtn').on('click', function() 
-    {
+    $('#clearSelectionBtn').on('click', function() {
         $('.leadCheckbox').prop('checked', false);
         // $('#checkAll').prop('checked', false);
         updateSelectedCount();
@@ -2589,7 +2637,4 @@
     //     return false;
     //     updateSelectedCount();
     // });
-
 </script>
-
-

@@ -181,10 +181,11 @@
                     <!-- <li>
                         <a href="smart-report">Smart Report</a>
                     </li> -->
-                    <?php if($_SESSION['user'] == "admin"): ?>
+                  
                     <li>
                         <a href="employee-performance-report.php">Employee Performance Report</a>
                     </li>
+                    <?php if($_SESSION['user'] == "admin"): ?>
                     <li>
                         <a href="dsr-reports.php">DSR Report</a>
                     </li>

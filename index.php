@@ -3,57 +3,70 @@
 <?php include "Layouts/Sidebar.php"; ?>
 
 <?php
+$user_id = $_SESSION['id'] ?? '';
+$today = date('Y-m-d');
+if ($_SESSION['user'] == "admin") {
+    $stmt = $mysqli->prepare("SELECT a.*, b.name as customer, c.name as user , destinations.name as destination_name
+        FROM query_mst a 
+        JOIN `customers` b ON a.customer_id = b.id 
+        Left JOIN  `destinations` ON destinations.id = a.destination 
+        JOIN users c ON a.user_id = c.id 
+        WHERE a.status= 'Follow Up'  AND a.call_date = ?
+        ORDER BY a.pinned DESC, a.id DESC");
+    $stmt->bind_param('s', $today);
+} else {
+    $stmt = $mysqli->prepare("SELECT a.*, b.name as customer, c.name as user 
+        FROM query_mst a 
+        JOIN customers b ON a.customer_id = b.id 
+        JOIN users c ON a.user_id = c.id 
+        WHERE a.status= 'Follow Up' AND a.call_date = ? AND FIND_IN_SET(?, a.user_id)
+        ORDER BY a.pinned DESC, a.id DESC");
+    $stmt->bind_param('si', $today, $user_id);
+}
 
-    if(isset($_SESSION['just_logged_in']) && $_SESSION['just_logged_in'] == true)
-    {
-        $showFollowupPopup = true;
-
-        // remove after first show
-        unset($_SESSION['just_logged_in']);
-    }
-    else
-    {
-        $showFollowupPopup = false;
-    }
-
+$stmt->execute();
+$res = $stmt->get_result();
+$sno = 1;
+if ($res->num_rows > 0 && $_SESSION['showFollowupPopup']) {
+    $showFollowupPopup = true;
+} else {
+    $showFollowupPopup = false;
+}
+// $showFollowupPopup = true;
+unset($_SESSION['showFollowupPopup']);
 ?>
 
 <?php
-    if (!empty($_GET['month'])) 
-    {
-        $month = $_GET['month'];
-        $year = $_GET['year'];  
-    } 
-    else 
-    {
-        $month = date('m');
-        $year = date('Y');
-    }
+if (!empty($_GET['month'])) {
+    $month = $_GET['month'];
+    $year = $_GET['year'];
+} else {
+    $month = date('m');
+    $year = date('Y');
+}
 
-    $stmt = $mysqli->prepare("SELECT * from `query_mst` where month(from_date)=? and year(from_date)=? and status ='Converted'");
-    $stmt->bind_param("ss", $month, $year);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    $travel_date = [];
-    while ($row = $res->fetch_assoc()) 
-    {
-        $travel_date[] = $row['from_date'];
-    }
+$stmt = $mysqli->prepare("SELECT * from `query_mst` where month(from_date)=? and year(from_date)=? and status ='Converted'");
+$stmt->bind_param("ss", $month, $year);
+$stmt->execute();
+$res = $stmt->get_result();
+$travel_date = [];
+while ($row = $res->fetch_assoc()) {
+    $travel_date[] = $row['from_date'];
+}
 
-    $ids = array_map('trim', explode(',', $_SESSION['child_ids']));
+$ids = array_map('trim', explode(',', $_SESSION['child_ids']));
 
-    $conditions = [];
-    $params = [];
-    $types = '';
+$conditions = [];
+$params = [];
+$types = '';
 
-    foreach ($ids as $id) 
-    {
-        $conditions[] = "FIND_IN_SET(?, user_id)";
-        $params[] = $id;
-        $types .= "i";
-    }
+foreach ($ids as $id) {
+    $conditions[] = "FIND_IN_SET(?, user_id)";
+    $params[] = $id;
+    $types .= "i";
+}
 
-    $sql = "
+$sql = "
         SELECT 
             COUNT(*) AS total,
             SUM(CASE WHEN status='New Query' THEN 1 ELSE 0 END) AS new_query,
@@ -64,12 +77,12 @@
         FROM `query_mst`
         WHERE " . implode(" OR ", $conditions);
 
-    $stmt = $mysqli->prepare($sql);
-    $stmt->bind_param($types, ...$params);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $dashboard = $result->fetch_assoc();
-    $topDestinationsQuery = "
+$stmt = $mysqli->prepare($sql);
+$stmt->bind_param($types, ...$params);
+$stmt->execute();
+$result = $stmt->get_result();
+$dashboard = $result->fetch_assoc();
+$topDestinationsQuery = "
         SELECT 
             d.name as destination_name,
             COUNT(q.id) as total_queries,
@@ -81,13 +94,12 @@
         ORDER BY total_sales DESC
         LIMIT 5
     ";
-    $topDestinationsResult = $mysqli->query($topDestinationsQuery);
-    $topDestinations = [];
-    while ($row = $topDestinationsResult->fetch_assoc()) 
-    {
-        $topDestinations[] = $row;
-    }
-    $topServicesQuery = "
+$topDestinationsResult = $mysqli->query($topDestinationsQuery);
+$topDestinations = [];
+while ($row = $topDestinationsResult->fetch_assoc()) {
+    $topDestinations[] = $row;
+}
+$topServicesQuery = "
         SELECT 
             s.name AS service_name,
             COUNT(q.id) AS total_queries,
@@ -99,14 +111,13 @@
         ORDER BY total_sales DESC
         LIMIT 5
     ";
-    $topServicesResult = $mysqli->query($topServicesQuery);
-    $topServices = [];
-    while ($row = $topServicesResult->fetch_assoc()) 
-    {
-        $topServices[] = $row;
-    }
+$topServicesResult = $mysqli->query($topServicesQuery);
+$topServices = [];
+while ($row = $topServicesResult->fetch_assoc()) {
+    $topServices[] = $row;
+}
 
-    $monthlySalesQuery = "
+$monthlySalesQuery = "
         SELECT 
             DATE_FORMAT(created_at, '%M') as month_name,
             MONTH(created_at) as month_num,
@@ -117,15 +128,14 @@
         GROUP BY MONTH(created_at)
         ORDER BY month_num ASC
     ";
-    $monthlySalesResult = $mysqli->query($monthlySalesQuery);
-    $monthlyLabels = [];
-    $monthlySales = [];
-    while ($row = $monthlySalesResult->fetch_assoc()) 
-    {
-        $monthlyLabels[] = $row['month_name'];
-        $monthlySales[] = $row['total_sales'];
-    }
-    $paymentMethodQuery = "
+$monthlySalesResult = $mysqli->query($monthlySalesQuery);
+$monthlyLabels = [];
+$monthlySales = [];
+while ($row = $monthlySalesResult->fetch_assoc()) {
+    $monthlyLabels[] = $row['month_name'];
+    $monthlySales[] = $row['total_sales'];
+}
+$paymentMethodQuery = "
         SELECT 
             payment_type,
             COUNT(*) as count,
@@ -133,16 +143,15 @@
         FROM `payment`
         GROUP BY payment_type
     ";
-    $paymentMethodResult = $mysqli->query($paymentMethodQuery);
-    $paymentMethods = [];
-    while ($row = $paymentMethodResult->fetch_assoc()) 
-    {
-        $paymentMethods[] = $row;
-    }
+$paymentMethodResult = $mysqli->query($paymentMethodQuery);
+$paymentMethods = [];
+while ($row = $paymentMethodResult->fetch_assoc()) {
+    $paymentMethods[] = $row;
+}
 
-    $user_id = $_SESSION['id'];
+$user_id = $_SESSION['id'];
 
-    $user_id = $_SESSION['id'];
+$user_id = $_SESSION['id'];
 
 // ADD FROM HERE
 $stmt = $mysqli->prepare("
@@ -176,51 +185,30 @@ $row = $res->fetch_assoc();
 
 if ($row) {
 
-    $conversion_percentage = ($row['total_queries'] > 0) 
+    $conversion_percentage = ($row['total_queries'] > 0)
         ? ($row['converted'] * 100 / $row['total_queries']) : 0;
 
-    $b = ($conversion_percentage >= 40) ? 15 :
-        (($conversion_percentage >= 30) ? 12 :
-        (($conversion_percentage >= 20) ? 9 :
-        (($conversion_percentage >= 10) ? 5 : 2)));
+    $b = ($conversion_percentage >= 40) ? 15 : (($conversion_percentage >= 30) ? 12 : (($conversion_percentage >= 20) ? 9 : (($conversion_percentage >= 10) ? 5 : 2)));
 
-    $e = ($row['avg_response_time'] <= 15) ? 10 :
-        (($row['avg_response_time'] <= 30) ? 8 :
-        (($row['avg_response_time'] <= 60) ? 6 :
-        (($row['avg_response_time'] <= 1440) ? 4 : 2)));
+    $e = ($row['avg_response_time'] <= 15) ? 10 : (($row['avg_response_time'] <= 30) ? 8 : (($row['avg_response_time'] <= 60) ? 6 : (($row['avg_response_time'] <= 1440) ? 4 : 2)));
 
-    $f = ($row['task_accuracy'] >= 80) ? 10 :
-        (($row['task_accuracy'] >= 60) ? 8 :
-        (($row['task_accuracy'] >= 40) ? 6 : 4));
+    $f = ($row['task_accuracy'] >= 80) ? 10 : (($row['task_accuracy'] >= 60) ? 8 : (($row['task_accuracy'] >= 40) ? 6 : 4));
 
-    $g = ($row['add_on_sale'] >= 25000) ? 10 :
-        (($row['add_on_sale'] >= 15000) ? 8 :
-        (($row['add_on_sale'] >= 8000) ? 6 :
-        (($row['add_on_sale'] >= 3000) ? 4 : 2)));
+    $g = ($row['add_on_sale'] >= 25000) ? 10 : (($row['add_on_sale'] >= 15000) ? 8 : (($row['add_on_sale'] >= 8000) ? 6 : (($row['add_on_sale'] >= 3000) ? 4 : 2)));
 
-    $h = ($row['review_quality'] >= 4) ? 10 :
-        (($row['review_quality'] == 3) ? 8 :
-        (($row['review_quality'] == 2) ? 6 :
-        (($row['review_quality'] == 1) ? 4 : 2)));
+    $h = ($row['review_quality'] >= 4) ? 10 : (($row['review_quality'] == 3) ? 8 : (($row['review_quality'] == 2) ? 6 : (($row['review_quality'] == 1) ? 4 : 2)));
 
-    $i = ($row['total_queries'] >= 100) ? 3 :
-        (($row['total_queries'] >= 80) ? 2 :
-        (($row['total_queries'] >= 50) ? 1 : 0));
+    $i = ($row['total_queries'] >= 100) ? 3 : (($row['total_queries'] >= 80) ? 2 : (($row['total_queries'] >= 50) ? 1 : 0));
 
-    $j = ($row['attendance_days_missed'] <= 0) ? 2 :
-        (($row['attendance_days_missed'] <= 2) ? 1 : 0);
+    $j = ($row['attendance_days_missed'] <= 0) ? 2 : (($row['attendance_days_missed'] <= 2) ? 1 : 0);
 
     $results_marks = $b + $e + $f + $g + $h + $i + $j;
 
-    $k = ($row['trainings_missed'] <= 0) ? 5 :
-        (($row['trainings_missed'] == 1) ? 3 : 1);
+    $k = ($row['trainings_missed'] <= 0) ? 5 : (($row['trainings_missed'] == 1) ? 3 : 1);
 
     $l = $row['knowledge_applied'];
 
-    $m = ($row['process_accuracy'] >= 100) ? 5 :
-        (($row['process_accuracy'] >= 80) ? 4 :
-        (($row['process_accuracy'] >= 60) ? 3 :
-        (($row['process_accuracy'] >= 40) ? 2 : 1)));
+    $m = ($row['process_accuracy'] >= 100) ? 5 : (($row['process_accuracy'] >= 80) ? 4 : (($row['process_accuracy'] >= 60) ? 3 : (($row['process_accuracy'] >= 40) ? 2 : 1)));
 
     $skills_marks = $k + $l + $m;
 
@@ -242,84 +230,74 @@ if ($row) {
         $alertClass = "danger";
         $message = "🚨 {$row['name']}! Poor performance (RED Zone)";
     }
-
 } else {
     $alertClass = "info";
     $message = "Welcome! No performance data found.";
 }
 
-
-
 ?>
 
 <style>
-    table 
-    {
+    table {
         width: 100%;
         border-collapse: collapse;
     }
 
     .th_calendar,
-    .td_calendar 
-    {
+    .td_calendar {
         border: 1px solid #ddd;
         padding: 5px;
         text-align: center;
         width: 50px;
     }
 
-    .th_calendar 
-    {
+    .th_calendar {
         background-color: #f4f4f4;
     }
 
-    .td_calendar 
-    {
+    .td_calendar {
         height: 50px;
 
     }
 
-    .today 
-    {
+    .today {
         background-color: #ffcccb;
     }
-    .top-selling-item 
-    {
+
+    .top-selling-item {
         border-bottom: 1px solid #eee;
         padding: 10px 0;
     }
-    
-    .top-selling-item:last-child 
-    {
+
+    .top-selling-item:last-child {
         border-bottom: none;
     }
-    
-    .progress-bar-custom 
-    {
+
+    .progress-bar-custom {
         height: 8px;
         border-radius: 4px;
         background-color: #e9ecef;
     }
-    
-    .progress-fill 
-    {
+
+    .progress-fill {
         height: 100%;
         border-radius: 4px;
         transition: width 0.5s ease;
     }
 
     .alert-success {
-    background: #67db93;
-    border-color: #edfaf2;
-    color: white;
+        background: #67db93;
+        border-color: #edfaf2;
+        color: white;
     }
 </style>
 
 <div class="content-body">
     <div class="container-fluid">
-    <div class="alert alert-<?= $alertClass ?> alert-dismissible fade show" role="alert">
-        <?= $message ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>                                
+        <div class="alert alert-<?= $alertClass ?> alert-dismissible fade show" role="alert">
+            <?= $message ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
         <div class="row">
             <div class="col-xl-12">
                 <div class="col-xl-12 card h-auto">
@@ -538,30 +516,29 @@ if ($row) {
                                             <div>
                                                 <h3 class="font-w600 fs-2 mb-0 text-white">
                                                     <?php
-                                                        $ids = array_map('trim', explode(',', $_SESSION['child_ids']));
-                                                        $conditions = [];
-                                                        $params = [];
-                                                        $types = '';
+                                                    $ids = array_map('trim', explode(',', $_SESSION['child_ids']));
+                                                    $conditions = [];
+                                                    $params = [];
+                                                    $types = '';
 
-                                                        foreach ($ids as $id)
-                                                        {
-                                                            $conditions[] = "FIND_IN_SET(?, user_id)";
-                                                            $params[] = $id;
-                                                            $types .= "i";
-                                                        }
+                                                    foreach ($ids as $id) {
+                                                        $conditions[] = "FIND_IN_SET(?, user_id)";
+                                                        $params[] = $id;
+                                                        $types .= "i";
+                                                    }
 
-                                                        $sql = "
+                                                    $sql = "
                                                             SELECT 
                                                                 sum(sale_amount) AS total_sale_amount
                                                             FROM `query_mst`
                                                             WHERE " . implode(" OR ", $conditions);
 
-                                                        $stmt = $mysqli->prepare($sql);
-                                                        $stmt->bind_param($types, ...$params);
-                                                        $stmt->execute();
+                                                    $stmt = $mysqli->prepare($sql);
+                                                    $stmt->bind_param($types, ...$params);
+                                                    $stmt->execute();
 
-                                                        $result = $stmt->get_result();
-                                                        $totalSaleAmount = $result->fetch_assoc();
+                                                    $result = $stmt->get_result();
+                                                    $totalSaleAmount = $result->fetch_assoc();
                                                     ?>
                                                     <?php echo $totalSaleAmount["total_sale_amount"]; ?>
 
@@ -606,10 +583,10 @@ if ($row) {
                                                 <h3 class="font-w600 fs-2 mb-0 text-white">
                                                     <h3 class="font-w600 fs-2 mb-0 text-white">
                                                         <?php
-                                                            $stmt = $mysqli->prepare("SELECT SUM(amount) as total_expense_amount FROM expenses  WHERE user_id in (" . $_SESSION['child_ids'] . ")");
-                                                            $stmt->execute();
-                                                            $expense = $stmt->get_result()->fetch_assoc();
-                                                            $totalExpenseAmount = $expense['total_expense_amount'];
+                                                        $stmt = $mysqli->prepare("SELECT SUM(amount) as total_expense_amount FROM expenses  WHERE user_id in (" . $_SESSION['child_ids'] . ")");
+                                                        $stmt->execute();
+                                                        $expense = $stmt->get_result()->fetch_assoc();
+                                                        $totalExpenseAmount = $expense['total_expense_amount'];
 
                                                         ?>
                                                         <?php echo $totalExpenseAmount; ?>
@@ -687,8 +664,8 @@ if ($row) {
                                                 <h3 class="font-w600 fs-2 mb-0 text-white">
                                                     <h3 class="font-w600 fs-2 mb-0 text-white">
                                                         <?php
-                                                            $child_ids = $_SESSION['child_ids'];
-                                                            $stmt = $mysqli->prepare("SELECT
+                                                        $child_ids = $_SESSION['child_ids'];
+                                                        $stmt = $mysqli->prepare("SELECT
                                                                 (SELECT COALESCE(SUM(amount), 0) FROM payment  WHERE user_id IN ($child_ids)) AS total_payments,
                                                                 (SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE user_id IN ($child_ids)) AS total_expenses,
                                                                 (
@@ -697,9 +674,9 @@ if ($row) {
                                                                 ) AS total_profit
                                                             ");
 
-                                                            $stmt->execute();
-                                                            $result = $stmt->get_result()->fetch_assoc();
-                                                            echo  $result['total_profit']  
+                                                        $stmt->execute();
+                                                        $result = $stmt->get_result()->fetch_assoc();
+                                                        echo  $result['total_profit']
                                                         ?>
                                                     </h3>
                                                 </h3>
@@ -834,25 +811,23 @@ if ($row) {
                                         <div>
                                             <select name="month" id="month" class="form-control">
                                                 <?php
-                                                    $currentMonth = date('n');
-                                                    for ($i = 1; $i <= 12; $i++) 
-                                                    {
-                                                        $selected = (isset($_GET['month']) ? $_GET['month'] == $i : $currentMonth == $i) ? 'selected' : '';
-                                                        echo '<option value="' . $i . '" ' . $selected . '>' . $i . '</option>';
-                                                    }
+                                                $currentMonth = date('n');
+                                                for ($i = 1; $i <= 12; $i++) {
+                                                    $selected = (isset($_GET['month']) ? $_GET['month'] == $i : $currentMonth == $i) ? 'selected' : '';
+                                                    echo '<option value="' . $i . '" ' . $selected . '>' . $i . '</option>';
+                                                }
                                                 ?>
                                             </select>
                                         </div>
                                         <div class="mx-1">
                                             <select name="year" id="year" class="form-control">
                                                 <?php
-                                                    $currentYear = date('Y');
-                                                    $endYear = date('Y', strtotime('+5 year'));
-                                                    for ($i = 2022; $i < $endYear; $i++) 
-                                                    {
-                                                        $selected = (isset($_GET['year']) ? $_GET['year'] == $i : $currentYear == $i) ? 'selected' : '';
-                                                        echo '<option value="' . $i . '" ' . $selected . '>' . $i . '</option>';
-                                                    }
+                                                $currentYear = date('Y');
+                                                $endYear = date('Y', strtotime('+5 year'));
+                                                for ($i = 2022; $i < $endYear; $i++) {
+                                                    $selected = (isset($_GET['year']) ? $_GET['year'] == $i : $currentYear == $i) ? 'selected' : '';
+                                                    echo '<option value="' . $i . '" ' . $selected . '>' . $i . '</option>';
+                                                }
                                                 ?>
                                             </select>
                                         </div>
@@ -865,66 +840,60 @@ if ($row) {
 
                             <div class="card-body  px-3">
                                 <?php
-                                    $dateString = $year . '-' . $month . '-01';
-                                    echo '<h5 class="mx-4">' . date('F', strtotime($dateString)) . ', ' . date('Y', strtotime($dateString)) . '</h5>';
+                                $dateString = $year . '-' . $month . '-01';
+                                echo '<h5 class="mx-4">' . date('F', strtotime($dateString)) . ', ' . date('Y', strtotime($dateString)) . '</h5>';
 
-                                    echo build_calendar($month, $year, $travel_date);
-                                    function build_calendar($month, $year, $travel_date)
-                                    {
-                                        $daysOfWeek = array('Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday');
-                                        $firstDayOfMonth = mktime(0, 0, 0, $month, 1, $year);
-                                        $numberDays = date('t', $firstDayOfMonth);
-                                        $dateComponents = getdate($firstDayOfMonth);
-                                        $monthName = $dateComponents['month'];
-                                        $dayOfWeek = $dateComponents['wday'];
-                                        $calendar = "<table>";
-                                        $calendar .= "<caption>$monthName $year</caption>";
-                                        $calendar .= "<tr>";
-                                        foreach ($daysOfWeek as $day) 
-                                        {
-                                            $calendar .= "<th class='th_calendar'>$day</th>";
-                                        }
-                                        $calendar .= "</tr><tr>";
-                                        if ($dayOfWeek > 0) 
-                                        {
-                                            $calendar .= "<td class='td_calendar' colspan='$dayOfWeek'>&nbsp;</td>";
-                                        }
-
-                                        $currentDay = 1;
-                                        $month = str_pad($month, 2, "0", STR_PAD_LEFT);
-                                        $year = $year;
-                                        $todayDate = date('Y-m-d');
-                                        while ($currentDay <= $numberDays) 
-                                        {
-                                            if ($dayOfWeek == 7) 
-                                            {
-                                                $dayOfWeek = 0;
-                                                $calendar .= "</tr><tr>";
-                                            }
-
-                                            $currentDayRel = str_pad($currentDay, 2, "0", STR_PAD_LEFT);
-                                            $date = "$year-$month-$currentDayRel";
-
-                                            $todayClass = ($date == $todayDate) ? 'today' : '';
-                                            $todayText = ($date == $todayDate) ? 'Today' : '';
-                                            $event = "";
-                                            if (in_array($date, $travel_date)) 
-                                            {
-                                                $event = 'bg-success';
-                                            }
-                                            $calendar .= "<td class=' td_calendar travel_date $todayClass $event' data-travel_date='$date'>$currentDay $todayText</td>";
-                                            $currentDay++;
-                                            $dayOfWeek++;
-                                        }
-                                        if ($dayOfWeek != 7) 
-                                        {
-                                            $remainingDays = 7 - $dayOfWeek;
-                                            $calendar .= "<td class='td_calendar' colspan='$remainingDays'>&nbsp;</td>";
-                                        }
-                                        $calendar .= "</tr>";
-                                        $calendar .= "</table>";
-                                        return $calendar;
+                                echo build_calendar($month, $year, $travel_date);
+                                function build_calendar($month, $year, $travel_date)
+                                {
+                                    $daysOfWeek = array('Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday');
+                                    $firstDayOfMonth = mktime(0, 0, 0, $month, 1, $year);
+                                    $numberDays = date('t', $firstDayOfMonth);
+                                    $dateComponents = getdate($firstDayOfMonth);
+                                    $monthName = $dateComponents['month'];
+                                    $dayOfWeek = $dateComponents['wday'];
+                                    $calendar = "<table>";
+                                    $calendar .= "<caption>$monthName $year</caption>";
+                                    $calendar .= "<tr>";
+                                    foreach ($daysOfWeek as $day) {
+                                        $calendar .= "<th class='th_calendar'>$day</th>";
                                     }
+                                    $calendar .= "</tr><tr>";
+                                    if ($dayOfWeek > 0) {
+                                        $calendar .= "<td class='td_calendar' colspan='$dayOfWeek'>&nbsp;</td>";
+                                    }
+
+                                    $currentDay = 1;
+                                    $month = str_pad($month, 2, "0", STR_PAD_LEFT);
+                                    $year = $year;
+                                    $todayDate = date('Y-m-d');
+                                    while ($currentDay <= $numberDays) {
+                                        if ($dayOfWeek == 7) {
+                                            $dayOfWeek = 0;
+                                            $calendar .= "</tr><tr>";
+                                        }
+
+                                        $currentDayRel = str_pad($currentDay, 2, "0", STR_PAD_LEFT);
+                                        $date = "$year-$month-$currentDayRel";
+
+                                        $todayClass = ($date == $todayDate) ? 'today' : '';
+                                        $todayText = ($date == $todayDate) ? 'Today' : '';
+                                        $event = "";
+                                        if (in_array($date, $travel_date)) {
+                                            $event = 'bg-success';
+                                        }
+                                        $calendar .= "<td class=' td_calendar travel_date $todayClass $event' data-travel_date='$date'>$currentDay $todayText</td>";
+                                        $currentDay++;
+                                        $dayOfWeek++;
+                                    }
+                                    if ($dayOfWeek != 7) {
+                                        $remainingDays = 7 - $dayOfWeek;
+                                        $calendar .= "<td class='td_calendar' colspan='$remainingDays'>&nbsp;</td>";
+                                    }
+                                    $calendar .= "</tr>";
+                                    $calendar .= "</table>";
+                                    return $calendar;
+                                }
                                 ?>
                             </div>
                         </div>
@@ -960,7 +929,7 @@ if ($row) {
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="col-xl-3">
                         <div class="card">
                             <div class="card-header px-3">
@@ -969,7 +938,7 @@ if ($row) {
                             <div class="card-body px-3">
 
                                 <?php if (!empty($topServices)): ?>
-                                    
+
                                     <?php $maxServiceSales = max(array_column($topServices, 'total_sales')); ?>
 
                                     <?php foreach ($topServices as $index => $service): ?>
@@ -1023,14 +992,11 @@ if ($row) {
                                             <select name="user_id" class="form-select">
                                                 <option value="" selected disabled>Select User</option>
                                                 <?php
-                                                if ($_SESSION['user'] != 'admin') 
-                                                {
+                                                if ($_SESSION['user'] != 'admin') {
                                                     $user_ids = $_SESSION['child_ids'];
                                                     $stmt = $mysqli->prepare("SELECT * FROM users WHERE status = '1' AND FIND_IN_SET(id, ?)");
                                                     $stmt->bind_param("s", $user_ids);
-                                                } 
-                                                else 
-                                                {
+                                                } else {
                                                     $stmt = $mysqli->prepare("SELECT * FROM users WHERE status = '1'");
                                                 }
 
@@ -1208,30 +1174,6 @@ if ($row) {
                                         </thead>
                                         <tbody>
                                             <?php
-
-                                            $today = date('Y-m-d');
-                                            if ($_SESSION['user'] == "admin") {
-                                                $stmt = $mysqli->prepare("SELECT a.*, b.name as customer, c.name as user , destinations.name as destination_name
-                                                    FROM query_mst a 
-                                                    JOIN customers b ON a.customer_id = b.id 
-                                                   Left JOIN  destinations ON destinations.id = a.destination 
-                                                    JOIN users c ON a.user_id = c.id 
-                                                    WHERE a.status= 'Follow Up'  AND a.call_date = ?
-                                                    ORDER BY a.pinned DESC, a.id DESC");
-                                                $stmt->bind_param('s', $today);
-                                            } else {
-                                                $stmt = $mysqli->prepare("SELECT a.*, b.name as customer, c.name as user 
-                                                    FROM query_mst a 
-                                                    JOIN customers b ON a.customer_id = b.id 
-                                                    JOIN users c ON a.user_id = c.id 
-                                                    WHERE a.status= 'Follow Up' AND a.call_date = ? AND FIND_IN_SET(?, a.user_id)
-                                                    ORDER BY a.pinned DESC, a.id DESC");
-                                                $stmt->bind_param('si', $today, $_SESSION['id']);
-                                            }
-
-                                            $stmt->execute();
-                                            $res = $stmt->get_result();
-                                            $sno = 1;
                                             while ($row = $res->fetch_assoc()) {
                                             ?>
                                                 <tr>
@@ -1965,126 +1907,395 @@ if ($row) {
     </div>
 </div>
 
-<?php if($showFollowupPopup == true): ?>
+<style>
+    #followupModal .modal-content {
+        border: 0;
+        border-radius: 24px;
+        overflow: hidden;
+        background: #f8fafc;
+        font-family: 'Inter', sans-serif;
+    }
 
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
+    #followupModal .modal-header {
+        background: linear-gradient(135deg, #F8857D, #ff9e97);
+        padding: 22px 28px;
+        border: 0;
+    }
 
-        let followupModal = new bootstrap.Modal(
-            document.getElementById('followupPopup')
-        );
+    #followupModal .modal-title {
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: .3px;
+    }
 
-        followupModal.show();
+    .followup-card {
+        border: 0;
+        border-radius: 20px;
+        overflow: hidden;
+        transition: all .25s ease;
+        background: #fff;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, .05);
+    }
 
-    });
-    </script>
+    .followup-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 14px 35px rgba(248, 133, 125, .18);
+    }
 
-<?php endif; ?>
-<?php include "Layouts/Footer.php"  ?>
+    .followup-top {
+        padding: 18px 20px;
+        border-bottom: 1px solid #f1f1f1;
+        background: #fff;
+    }
 
-<!-- Follow Up Popup Modal -->
-<div class="modal fade" id="followupPopup" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
+    .customer-name {
+        font-size: 18px;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 4px;
+    }
 
-            <div class="modal-header bg-warning">
-                <h5 class="modal-title">
-                    Today's Follow Ups
-                </h5>
+    .followup-body {
+        padding: 20px;
+    }
 
-                <button type="button"
-                        class="btn-close"
-                        data-bs-dismiss="modal">
-                </button>
-            </div>
+    .info-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+        margin-bottom: 3px;
+    }
 
-            <div class="modal-body">
+    .info-value {
+        font-size: 15px;
+        font-weight: 600;
+        color: #334155;
+    }
 
-                <div class="table-responsive">
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Customer</th>
-                                <th>Mobile</th>
-                                <th>Call Time</th>
-                                <th>Remarks</th>
-                            </tr>
-                        </thead>
+    .followup-info {
+        padding: 12px;
+        border-radius: 14px;
+        background: #f8fafc;
+        height: 100%;
+    }
 
-                        <tbody>
+    .remark-box {
+        background: #fff5f5;
+        border-left: 4px solid #F8857D;
+        border-radius: 12px;
+        padding: 14px;
+        color: #475569;
+        font-size: 14px;
+        line-height: 1.6;
+    }
 
-                            <?php
-                            $today = date('Y-m-d');
+    .priority-badge {
+        background: #F8857D;
+        color: #fff;
+        padding: 6px 12px;
+        border-radius: 30px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .5px;
+    }
 
-                            if ($_SESSION['user'] == "admin")
-                            {
-                                $stmt = $mysqli->prepare("
-                                    SELECT *
-                                    FROM query_mst
-                                    WHERE status='Follow Up'
-                                    AND call_date=?
-                                    ORDER BY pinned DESC, call_time ASC
-                                ");
+    .empty-followup {
+        text-align: center;
+        padding: 70px 20px;
+    }
 
-                                $stmt->bind_param("s", $today);
-                            }
-                            else
-                            {
-                                $stmt = $mysqli->prepare("
-                                    SELECT *
-                                    FROM query_mst
-                                    WHERE status='Follow Up'
-                                    AND call_date=?
-                                    AND FIND_IN_SET(?, user_id)
-                                    ORDER BY pinned DESC, call_time ASC
-                                ");
+    .empty-followup h4 {
+        font-weight: 700;
+        color: #334155;
+        margin-bottom: 10px;
+    }
 
-                                $stmt->bind_param(
-                                    "si",
-                                    $today,
-                                    $_SESSION['id']
-                                );
-                            }
+    .empty-followup p {
+        color: #94a3b8;
+        margin: 0;
+    }
 
-                            $stmt->execute();
-                            $res = $stmt->get_result();
+    .btn-close {
+        filter: brightness(0) invert(1);
+        opacity: 1;
+    }
 
-                            if ($res->num_rows > 0)
-                            {
-                                while($row = $res->fetch_assoc())
-                                {
-                                    echo '
-                                    <tr>
-                                        <td>'.$row['name'].'</td>
-                                        <td>'.$row['mobile'].'</td>
-                                        <td>'.$row['call_time'].'</td>
-                                        <td>'.$row['remarks'].'</td>
-                                    </tr>';
-                                }
-                            }
-                            else
-                            {
-                                echo '
-                                <tr>
-                                    <td colspan="4" class="text-center">
-                                        No Follow Ups Today
-                                    </td>
-                                </tr>';
-                            }
-                            ?>
+    @media(max-width:768px) {
+        .modal-dialog {
+            margin: 12px;
+        }
 
-                        </tbody>
-                    </table>
+        #followupModal .modal-title {
+            font-size: 20px;
+        }
+    }
+</style>
+
+<?php if ($showFollowupPopup == true): ?>
+
+    <?php
+
+    $today = date('Y-m-d');
+
+    $stmtPopup = $mysqli->prepare("
+SELECT 
+    a.*,
+    b.name as customer_name,
+    d.name as destination_name
+
+FROM query_mst a
+
+LEFT JOIN customers b 
+ON a.customer_id = b.id
+
+LEFT JOIN destinations d
+ON a.destination = d.id
+
+WHERE a.status='Follow Up'
+AND a.call_date = ?
+AND FIND_IN_SET(?, a.user_id)
+
+ORDER BY a.pinned DESC, a.id DESC
+");
+
+    $stmtPopup->bind_param("si", $today, $_SESSION['id']);
+    $stmtPopup->execute();
+
+    $resPopup = $stmtPopup->get_result();
+
+    $totalCards = $resPopup->num_rows;
+
+    $modalClass = "modal-xl";
+
+    if ($totalCards == 1) {
+        $modalClass = "modal-md";
+    } elseif ($totalCards <= 3) {
+        $modalClass = "modal-lg";
+    }
+
+    ?>
+
+    <div class="modal fade"
+        id="followupModal"
+        tabindex="-1"
+        aria-hidden="true">
+
+        <div class="modal-dialog <?= $modalClass ?> modal-dialog-centered">
+
+            <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+
+                <!-- Header -->
+                <div class="modal-header border-0 py-3 px-4"
+                    style="background:#F8857D;">
+
+                    <div>
+
+                        <h4 class="text-white fw-bold mb-0">
+                            Today's Follow Ups
+                        </h4>
+
+                        <small class="text-white-50">
+                            <?= $totalCards ?> Pending Follow Ups
+                        </small>
+
+                    </div>
+
+                    <button type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal"></button>
+
+                </div>
+
+                <!-- Body -->
+                <div class="modal-body bg-light p-3">
+
+                    <div class="row g-3">
+
+                        <?php if ($totalCards > 0): ?>
+
+                            <?php while ($row = $resPopup->fetch_assoc()): ?>
+
+                                <div class="<?= $totalCards == 1 ? 'col-12' : 'col-lg-6' ?>">
+
+                                    <div class="card border-0 shadow-sm rounded-4 h-100">
+
+                                        <div class="card-body p-3">
+
+                                            <!-- Top -->
+                                            <div class="d-flex justify-content-between align-items-start mb-3">
+
+                                                <div>
+
+                                                    <h5 class="fw-bold text-dark mb-1"
+                                                        style="font-size:18px;">
+
+                                                        <?= $row['customer_name'] ?>
+
+                                                    </h5>
+
+                                                    <span class="badge rounded-pill bg-light border text-dark px-3 py-2"
+                                                        style="font-size:13px;">
+
+                                                        <?= $row['destination_name'] ?>
+
+                                                    </span>
+
+                                                </div>
+
+                                                <?php if ($row['pinned'] == 1): ?>
+
+                                                    <span class="badge rounded-pill px-3 py-2"
+                                                        style="background:#F8857D;font-size:12px;">
+
+                                                        Priority
+
+                                                    </span>
+
+                                                <?php endif; ?>
+
+                                            </div>
+
+                                            <!-- Info -->
+                                            <div class="row g-2">
+
+                                                <div class="col-6">
+
+                                                    <div class="bg-light border rounded-4 p-3">
+
+                                                        <div class="text-black mb-1"
+                                                            style="font-size:12px;">
+
+                                                            Mobile
+
+                                                        </div>
+
+                                                        <div class="fw-semibold text-dark"
+                                                            style="font-size:15px;">
+
+                                                            <?= $row['mobile'] ?>
+
+                                                        </div>
+
+                                                    </div>
+
+                                                </div>
+
+                                                <div class="col-6">
+
+                                                    <div class="bg-light border rounded-4 p-3">
+
+                                                        <div class="text-black mb-1"
+                                                            style="font-size:12px;">
+
+                                                            Call Time
+
+                                                        </div>
+
+                                                        <div class="fw-semibold text-dark"
+                                                            style="font-size:15px;">
+
+                                                            <?= $row['call_time'] ?>
+
+                                                        </div>
+
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+
+                                            <!-- Remarks -->
+                                            <div class="mt-3 bg-white border rounded-4 p-3">
+
+                                                <div class="fw-bold text-dark mb-2"
+                                                    style="font-size:14px;">
+
+                                                    Remarks
+
+                                                </div>
+
+                                                <div class="text-black"
+                                                    style="font-size:14px; line-height:1.6;">
+
+                                                    <?= strlen($row['remarks']) > 80
+                                                        ? substr($row['remarks'], 0, 80) . '...'
+                                                        : $row['remarks']; ?>
+
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            <?php endwhile; ?>
+
+                        <?php else: ?>
+
+                            <div class="col-12">
+
+                                <div class="text-center py-5">
+
+                                    <span class="badge rounded-pill px-4 py-2 mb-3"
+                                        style="background:#F8857D;font-size:14px;">
+
+                                        No Pending Follow Ups
+
+                                    </span>
+
+                                    <h4 class="fw-bold text-dark">
+                                        You're all caught up
+                                    </h4>
+
+                                    <p class="text-black mb-0">
+                                        No follow ups scheduled today.
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        <?php endif; ?>
+
+                    </div>
+
                 </div>
 
             </div>
+
         </div>
+
     </div>
-</div>
+
+    <script>
+        window.addEventListener('load', function() {
+
+            sessionStorage.removeItem("followupShown");
+
+            let modalElement = document.getElementById('followupModal');
+
+            if (modalElement) {
+
+                let followupModal = new bootstrap.Modal(modalElement);
+
+                followupModal.show();
+
+            }
+
+        });
+    </script>
+
+<?php endif; ?>
+
+<?php include "Layouts/Footer.php"  ?>
 
 <script>
-    $(document).on("click", ".travel_date", function() 
-    {
+    $(document).on("click", ".travel_date", function() {
         var travel_date = $(this).data("travel_date");
 
         $.ajax({
@@ -2119,15 +2330,13 @@ if ($row) {
                 $("#EventTable").html(html);
                 $("#Event_Details_Modal").modal("show");
             },
-            complete: function() 
-            {
+            complete: function() {
                 $('#wait').hide();
             }
         });
 
     })
-    $(document).on("click", ".view", function() 
-    {
+    $(document).on("click", ".view", function() {
 
         var id = $(this).data("id");
         $.ajax({
@@ -2160,14 +2369,12 @@ if ($row) {
     });
 
 
-    $('.bd-example-modal-lg').on('shown.bs.modal', function() 
-    {
+    $('.bd-example-modal-lg').on('shown.bs.modal', function() {
         $('#multiple_user').select2({
             dropdownParent: $('.bd-example-modal-lg')
         });
     });
-    $(document).on("click", ".editTask", function() 
-    {
+    $(document).on("click", ".editTask", function() {
         $("#id").val($(this).data("id"));
         $("#title").val($(this).data("title"));
         $("#due_date").val($(this).data("due_date"));
@@ -2181,19 +2388,8 @@ if ($row) {
         $(".bd-example-modal-lg").modal("show");
     });
 
-    $(document).on("click", ".addTask", function() 
-    {
+    $(document).on("click", ".addTask", function() {
         $("#companyform").find("input[type=text], input[type=hidden], input[type=file], textarea, select").val('');
         $(".bd-example-modal-lg").modal("show");
-    });
-
-    document.addEventListener("DOMContentLoaded", function () {
-
-    let followupModal = new bootstrap.Modal(
-        document.getElementById('followupPopup')
-    );
-
-    followupModal.show();
-
     });
 </script>

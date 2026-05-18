@@ -1,130 +1,116 @@
 <?php
-    include("config.php");
-    if (isset($_COOKIE['token'])) 
-    {
-        $stmt = $mysqli->prepare("SELECT * FROM `users` WHERE token=?");
-        $stmt->bind_param("s", $_COOKIE['token']);
-        $stmt->execute();
-        $user = $stmt->get_result()->fetch_assoc();
-        $stmt->close();
-        if (($user)) 
-        {
-            switch ($user['role']) 
-            {
-                case 'admin':
-                    alert('Successfully login.', 'success', "success");
-                    redirect('index.php');
-                    break;
-                case 'Staff':
-                    alert('Successfully login.', 'success', "success");
-                    redirect('index.php');
-                    break;
-                case 'Team Manager':
-                    alert('Successfully login.', 'success', "success");
-                    redirect('index.php');
-                    break;
-                default:
-                    alert('invalid user role.', 'error');
-                    redirect('login.php');
-                    break;
-            }
-        }
-    }  
-    if (isset($_POST['btnLogin'])) 
-    {
-        $stmt = $mysqli->prepare("SELECT * FROM `users` WHERE   username=? and `password`=? and status = '1'");
-        $stmt->bind_param("ss", $_POST['username'], $_POST['password']);
-        $stmt->execute();
-        $user = $stmt->get_result()->fetch_assoc();
-
-        $stmt->close();
-        if (empty($user))
-        {
-            $_SESSION['alert'] = [
-                'title' => 'Login Failed',
-                'text' => 'Invalid Email or Password!',
-                'icon' => 'error'
-            ];
-            redirect('login.php');
-        }
-        else 
-        {
-            $_SESSION['user'] = $user['role'];
-            $_SESSION['role_id'] = $user['role_id'];
-            $_SESSION['id'] = $user['id'];
-            $_SESSION['token'] = token(25);
-            $_SESSION['last_login'] = $user['last_login'];
-            $_SESSION['username'] = $user['username'];
-            $_SESSION['email'] = $user['email'];
-            $_SESSION['last_ip'] = $user['last_ip'];
-            setcookie('token', $_SESSION['token'], time() + 86400 * 1);
-            $stmt = $mysqli->prepare("UPDATE `users` set token=?,last_login=now(),last_ip=? WHERE  id=" . $user['id'] . "   ");
-            $stmt->bind_param("ss", $_SESSION['token'], $_SERVER['REMOTE_ADDR']);
-            $stmt->execute();
-            $stmt->close();
-
-            $child_ids = [];
-    $iterable = [];
-    array_push($iterable, $_SESSION['id']);
-
-    while (sizeOf($iterable) > 0) {
-      $iterable = implode(', ', $iterable);
-      array_push($child_ids, $iterable);
-      $stmt = $mysqli->prepare("SELECT id from users where parent_id in (" . $iterable . ")");
-      $stmt->execute();
-      $result = $stmt->get_result();
-      $iterable = [];
-      while ($row = $result->fetch_assoc())
-        array_push($iterable, $row['id']);
-    }
-    $_SESSION['child_ids'] = implode(', ', $child_ids);
-
-    // echo "<pre>";
-    // print_r($_SESSION['child_ids']); exit;
-
-
-            switch ($user['role']) 
-            {
-                case 'admin':
-                    $_SESSION['alert'] = [
-                        'title' => 'Login Success',
-                        'text' => 'Welcome back!',
-                        'icon' => 'success'
-                    ];
-                    redirect('index.php');
-                    break;
-                case 'Staff':
-                 
-                     $_SESSION['alert'] = [
-                        'title' => 'Login Success',
-                        'text' => 'Welcome back!',
-                        'icon' => 'success'
-                    ];
-                    redirect('index.php');
-                    break;
-                case 'Team Manager':
-                 
-                     $_SESSION['alert'] = [
-                        'title' => 'Login Success',
-                        'text' => 'Welcome back!',
-                        'icon' => 'success'
-                    ];
-                    redirect('index.php');
-                    break;
-                default:
-                    alert('invalid user role.', 'error');
-                    redirect('login.php');
-                    break;
-            }
-        }
-    }
-    $stmt = $mysqli->prepare("SELECT * FROM `settings` WHERE   id=1");
+include("config.php");
+if (isset($_COOKIE['token'])) {
+    $stmt = $mysqli->prepare("SELECT * FROM `users` WHERE token=?");
+    $stmt->bind_param("s", $_COOKIE['token']);
     $stmt->execute();
-    $setting = $stmt->get_result()->fetch_assoc();
+    $user = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    if (($user)) {
+        switch ($user['role']) {
+            case 'admin':
+                alert('Successfully login.', 'success', "success");
+                redirect('index.php');
+                break;
+            case 'Staff':
+                alert('Successfully login.', 'success', "success");
+                redirect('index.php');
+                break;
+            case 'Team Manager':
+                alert('Successfully login.', 'success', "success");
+                redirect('index.php');
+                break;
+            default:
+                alert('invalid user role.', 'error');
+                redirect('login.php');
+                break;
+        }
+    }
+}
+if (isset($_POST['btnLogin'])) {
+    $stmt = $mysqli->prepare("SELECT * FROM `users` WHERE   username=? and `password`=? and status = '1'");
+    $stmt->bind_param("ss", $_POST['username'], $_POST['password']);
+    $stmt->execute();
+    $user = $stmt->get_result()->fetch_assoc();
+
+    $stmt->close();
+    if (empty($user)) {
+        $_SESSION['alert'] = [
+            'title' => 'Login Failed',
+            'text' => 'Invalid Email or Password!',
+            'icon' => 'error'
+        ];
+        redirect('login.php');
+    } else {
+        $_SESSION['user'] = $user['role'];
+        $_SESSION['role_id'] = $user['role_id'];
+        $_SESSION['id'] = $user['id'];
+        $_SESSION['token'] = token(25);
+        $_SESSION['last_login'] = $user['last_login'];
+        $_SESSION['username'] = $user['username'];
+        $_SESSION['email'] = $user['email'];
+        $_SESSION['last_ip'] = $user['last_ip'];
+        setcookie('token', $_SESSION['token'], time() + 86400 * 1);
+        $stmt = $mysqli->prepare("UPDATE `users` set token=?,last_login=now(),last_ip=? WHERE  id=" . $user['id'] . "   ");
+        $stmt->bind_param("ss", $_SESSION['token'], $_SERVER['REMOTE_ADDR']);
+        $stmt->execute();
+        $stmt->close();
+
+        $child_ids = [];
+        $iterable = [];
+        array_push($iterable, $_SESSION['id']);
+
+        while (sizeOf($iterable) > 0) {
+            $iterable = implode(', ', $iterable);
+            array_push($child_ids, $iterable);
+            $stmt = $mysqli->prepare("SELECT id from users where parent_id in (" . $iterable . ")");
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $iterable = [];
+            while ($row = $result->fetch_assoc())
+                array_push($iterable, $row['id']);
+        }
+        $_SESSION['child_ids'] = implode(', ', $child_ids);
+
+        // echo "<pre>";
+        // print_r($_SESSION['child_ids']); exit;
+
+        if ($user['role'] !== 'admin') {
+            $today_date = date('Y-m-d');
+            $current_user = $_SESSION['id'];
+            $cookie_today_date = $_COOKIE['today_date'] ?? '';
+            $cookie_current_user = $_COOKIE['current_user'] ?? '';
+
+            if ($cookie_today_date != $today_date || $cookie_current_user != $current_user) {
+                setcookie('today_date', $today_date, time() + (86400 * 1), "/");
+                setcookie('current_user', $current_user, time() + (86400 * 1), "/");
+                setcookie('is_modal_show', 'true', time() + (86400 * 1), "/");
+                $_SESSION['showFollowupPopup'] = true;
+                
+                redirect('index.php');
+            } else {
+                setcookie('is_modal_show', 'false', time() + (86400 * 1), "/");
+                $_SESSION['showFollowupPopup'] = false;
+                redirect('index.php');
+            }
+        } else {
+            $_SESSION['alert'] = [
+                'title' => 'Login Success',
+                'text' => 'Welcome back!',
+                'icon' => 'success'
+            ];
+            redirect('index.php');
+        }
+    }
+}
+$stmt = $mysqli->prepare("SELECT * FROM `settings` WHERE   id=1");
+$stmt->execute();
+$setting = $stmt->get_result()->fetch_assoc();
 ?>
 
 <!DOCTYPE html>
 <html lang="en" class="h-100">
+
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -138,7 +124,7 @@
     <meta property="og:image" content="social-image.png" />
     <meta name="format-detection" content="telephone=no">
     <title>Forever Admin Dashboard</title>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="shortcut icon" type="image/png" href="images/company_logo/logo1.png" />
     <link href="vendor/bootstrap-select/dist/css/bootstrap-select.min.css" rel="stylesheet">
@@ -157,7 +143,7 @@
                             <div class="col-xl-12">
                                 <div class="auth-form">
                                     <div class="text-center mb-3">
-                                      <img src="images/company_logo/logo1.png" alt="" height="100px">
+                                        <img src="images/company_logo/logo1.png" alt="" height="100px">
                                     </div>
                                     <h4 class="text-center mb-4">Sign in your account</h4>
                                     <form action="" Method="post">
@@ -208,10 +194,9 @@
     <script src="js/demo.js"></script>
     <script src="js/styleSwitcher.js"></script>
     <?php
-        if (isset($_SESSION['alert'])) 
-        {
-            $alert = $_SESSION['alert'];
-            echo "
+    if (isset($_SESSION['alert'])) {
+        $alert = $_SESSION['alert'];
+        echo "
             <script>
                 Swal.fire({
                     title: '{$alert['title']}',
@@ -221,8 +206,9 @@
                 });
             </script>
             ";
-            unset($_SESSION['alert']);
-        }
+        unset($_SESSION['alert']);
+    }
     ?>
 </body>
+
 </html>
