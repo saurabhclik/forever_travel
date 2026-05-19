@@ -1,4 +1,5 @@
 <?php
+ob_start();
 include "Layouts/Header.php";
 include "Layouts/Sidebar.php";
 
@@ -116,7 +117,7 @@ if (isset($_POST['btnSaveStatus'])) {
     }
 
     // convert to json
-    $attachment_json = json_encode($uploaded_files);
+    $followup_attachment = json_encode($uploaded_files);
 
     // COMMON VALIDATION
     if (empty($remarks)) {
@@ -144,12 +145,12 @@ if (isset($_POST['btnSaveStatus'])) {
     }
 
     $stmt = $mysqli->prepare("UPDATE `query_mst` SET `status`=?, `call_time`=?, `call_date`=?, `followup_attachment`=?, `sale_amount`=?, `remarks`=? WHERE id=?");
-    $stmt->bind_param("sssssi", $status, $call_time, $call_date, $attachment_json, $sale_amount, $remarks, $_POST['id']);
+    $stmt->bind_param("sssssi", $status, $call_time, $call_date, $followup_attachment, $sale_amount, $remarks, $_POST['id']);
     $stmt->execute();
     $stmt->close();
 
-    $stmt = $mysqli->prepare("INSERT into `query_det` (`mst_id`,`remarks`,`call_time`,`call_date`, `followup_attachment`, `user_id`,`status`) values (?,?,?,?,?,?)");
-    $stmt->bind_param("isssis", $_POST['id'], $remarks, $call_time, $call_date, $attachment_json, $user['id'], $status);
+    $stmt = $mysqli->prepare("INSERT into `query_det` (`mst_id`,`remarks`,`call_time`,`call_date`, `followup_attachment`, `user_id`,`status`) values (?,?,?,?,?,?,?)");
+    $stmt->bind_param("isssis", $_POST['id'], $remarks, $call_time, $call_date, $followup_attachment, $user['id'], $status);
     $stmt->execute();
 
     $_SESSION['alert'] = [
