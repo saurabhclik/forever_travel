@@ -158,7 +158,7 @@ if (isset($_POST['btnSaveStatus'])) {
         'icon' => 'success'
     ];
 
-    header("Location: ?status=" . ($_GET['status'] ?? 'All'));
+    header("Location: query.php?status=" . urlencode($_GET['status'] ?? 'All'));
     exit;
 }
 
