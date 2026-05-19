@@ -15,19 +15,21 @@ if ($_SESSION['user'] == "admin") {
         ORDER BY a.pinned DESC, a.id DESC");
     $stmt->bind_param('s', $today);
 } else {
-    $stmt = $mysqli->prepare("SELECT a.*, b.name as customer, c.name as user 
+    $stmt = $mysqli->prepare("SELECT a.*, b.name as customer, c.name as user ,destinations.name as destination_name
         FROM query_mst a 
         JOIN customers b ON a.customer_id = b.id 
         JOIN users c ON a.user_id = c.id 
+        JOIN destinations ON destinations.id = a.destination
         WHERE a.status= 'Follow Up' AND a.call_date = ? AND FIND_IN_SET(?, a.user_id)
         ORDER BY a.pinned DESC, a.id DESC");
     $stmt->bind_param('si', $today, $user_id);
 }
 
 $stmt->execute();
-$res = $stmt->get_result();
+$data = $stmt->get_result();
+// echo '<pre>'; print_r($res->fetch_all(MYSQLI_ASSOC)); echo '</pre>'; exit;
 $sno = 1;
-if ($res->num_rows > 0 && $_SESSION['showFollowupPopup']) {
+if ($data->num_rows > 0 && $_SESSION['showFollowupPopup']) {
     $showFollowupPopup = true;
 } else {
     $showFollowupPopup = false;
@@ -979,6 +981,7 @@ if ($row) {
                         </div>
                     </div>
                 </div>
+
                 <div class="row">
                     <div class="col-xl-12">
                         <div class="card">
@@ -1074,11 +1077,11 @@ if ($row) {
 
                                         // Base query
                                         $query = "SELECT a.*, b.name AS customer_name, c.name AS vendor_name, u.name AS user_name
-          FROM expenses a
-          LEFT JOIN customers b ON a.ids = b.id
-          LEFT JOIN vendor c ON a.vendor_id = c.id
-          JOIN users u ON a.user_id = u.id
-          WHERE a.paid_status = ?";
+                                        FROM expenses a
+                                        LEFT JOIN customers b ON a.ids = b.id
+                                        LEFT JOIN vendor c ON a.vendor_id = c.id
+                                        JOIN users u ON a.user_id = u.id
+                                        WHERE a.paid_status = ?";
 
                                         $params = [$status];
                                         $types  = "s";
@@ -1174,7 +1177,8 @@ if ($row) {
                                         </thead>
                                         <tbody>
                                             <?php
-                                            while ($row = $res->fetch_assoc()) {
+                                                while ($row = $data->fetch_assoc()) 
+                                                    {
                                             ?>
                                                 <tr>
                                                     <td>
@@ -1250,6 +1254,7 @@ if ($row) {
                         </div>
                     </div>
                 </div>
+
                 <div class="row">
                     <div class="col-xl-12">
                         <div class="card">
@@ -2051,7 +2056,7 @@ LEFT JOIN customers b
 ON a.customer_id = b.id
 
 LEFT JOIN destinations d
-ON a.destination = d.id
+ON a.destination = d.name
 
 WHERE a.status='Follow Up'
 AND a.call_date = ?
