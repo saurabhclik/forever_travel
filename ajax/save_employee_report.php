@@ -1,22 +1,40 @@
 <?php
 include "../config.php";
 
+header('Content-Type: application/json');
+
 $user_id = $_POST['user_id'] ?? 0;
 
-// fields
-$addon_sales = $_POST['add_on_sale'] ?? 0;
-$review_quality = $_POST['review_quality'] ?? 0;
-$task_accuracy = $_POST['task_accuracy'] ?? 0;
-$attendance_missed = $_POST['attendance_days_missed'] ?? 0;
-$training_missed = $_POST['trainings_missed'] ?? 0;
-$knowledge_applied = $_POST['knowledge_applied'] ?? 0;
-$process_accuracy = $_POST['process_accuracy'] ?? 0;
-$collaboration = $_POST['collaboration'] ?? 0;
-$ownership = $_POST['ownership'] ?? 0;
-$values = $_POST['values'] ?? 0;
+/* =========================
+   GET POST VALUES
+========================= */
+
+$addon_sales        = $_POST['add_on_sale'] ?? 0;
+$review_quality     = $_POST['review_quality'] ?? 0;
+$task_accuracy      = $_POST['task_accuracy'] ?? 0;
+$attendance_missed  = $_POST['attendance_days_missed'] ?? 0;
+$training_missed    = $_POST['trainings_missed'] ?? 0;
+$knowledge_applied  = $_POST['knowledge_applied'] ?? 0;
+$process_accuracy   = $_POST['process_accuracy'] ?? 0;
+$collaboration      = $_POST['collaboration'] ?? 0;
+$ownership          = $_POST['ownership'] ?? 0;
+$values_data        = $_POST['values_data'] ?? 0;
 
 /* =========================
-   UPDATE users table
+   VALIDATION
+========================= */
+
+if(empty($user_id))
+{
+    echo json_encode([
+        "status" => "error",
+        "message" => "Invalid User ID"
+    ]);
+    exit;
+}
+
+/* =========================
+   UPDATE USERS TABLE
 ========================= */
 
 $update = $mysqli->prepare("
@@ -35,7 +53,7 @@ $update = $mysqli->prepare("
 ");
 
 $update->bind_param(
-    "iiiiiiiiiii",
+    "ddddddddddi",
     $addon_sales,
     $review_quality,
     $task_accuracy,
@@ -45,24 +63,37 @@ $update->bind_param(
     $process_accuracy,
     $collaboration,
     $ownership,
-    $values,
+    $values_data,
     $user_id
 );
 
 $update->execute();
 
 /* =========================
-   INSERT into history table
+   INSERT HISTORY
 ========================= */
 
 $insert = $mysqli->prepare("
     INSERT INTO employe_report 
-    (user_id, add_on_sale, review_quality, task_accuracy, attendance_days_missed, trainings_missed, knowledge_applied, process_accuracy, collaboration, ownership, values_data, created_at)
+    (
+        user_id,
+        add_on_sale,
+        review_quality,
+        task_accuracy,
+        attendance_days_missed,
+        trainings_missed,
+        knowledge_applied,
+        process_accuracy,
+        collaboration,
+        ownership,
+        values_data,
+        created_at
+    )
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
 ");
 
 $insert->bind_param(
-    "iiiiiiiiiii",
+    "idddddddddd",
     $user_id,
     $addon_sales,
     $review_quality,
@@ -73,9 +104,16 @@ $insert->bind_param(
     $process_accuracy,
     $collaboration,
     $ownership,
-    $values
+    $values_data
 );
 
 $insert->execute();
 
-echo json_encode(["status" => "success"]);
+/* =========================
+   RESPONSE
+========================= */
+
+echo json_encode([
+    "status" => "success"
+]);
+?>

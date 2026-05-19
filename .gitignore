@@ -1,0 +1,60 @@
+# =========================
+# CORE PHP GITIGNORE
+# =========================
+
+# Vendor
+/vendor/
+
+# Composer
+composer.lock
+
+# Environment
+.env
+
+# Logs
+*.log
+
+# Cache
+/cache/
+/tmp/
+
+# Uploads
+/uploads/
+/files/
+/images/invoices/
+/uploads/followup/
+
+# IDE
+.vscode/
+.idea/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# XAMPP
+xampp_error.log
+
+# Session files
+/sessions/
+
+# Node modules
+/node_modules/
+
+# Backup files
+*.zip
+*.rar
+*.sql
+
+# Temporary
+*.tmp
+*.bak
+
+# PHPUnit
+/phpunit.xml
+
+# Generated files
+*.csv
+*.xlsx
+*.pdf
+
